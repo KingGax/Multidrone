@@ -1,0 +1,21 @@
+body {
+    background-color: powderblue;
+}
+h1 {
+    color: blue;
+}
+.gridcell_default{
+    -fx-border-color: white;
+}
+.gridcell_green{
+    -fx-background-color: green;
+}
+.gridcell_amber{
+    -fx-background-color: orange;
+}
+.gridcell_red{
+    -fx-background-color: red;
+}
+.gridcell_cyan{
+    -fx-background-color: cyan;
+}

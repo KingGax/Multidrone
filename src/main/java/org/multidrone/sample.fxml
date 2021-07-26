@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.web.WebView?>
+
+<VBox prefHeight="1000.0" prefWidth="1600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.multidrone.Controller">
+   <children>
+      <HBox alignment="CENTER" prefHeight="40.0" prefWidth="200.0" spacing="12.0">
+         <children>
+            <Button id="btnArmAll" mnemonicParsing="false" text="Arm" />
+            <Button id="btnDisarmAll" mnemonicParsing="false" text="Disarm" />
+            <Button id="btnLaunchAll" mnemonicParsing="false" text="🚀" />
+            <Button id="btnRTL" mnemonicParsing="false" text="RTL" />
+            <Button id="btnLandAll" mnemonicParsing="false" text="⬇" textAlignment="CENTER" />
+            <Button id="btnReturnHome" mnemonicParsing="false" text="🏠" />
+            <Button id="btnFocusMap" mnemonicParsing="false" text="Focus Map" />
+            <Button id="btnStartController" mnemonicParsing="false" text="GOTO" />
+            <VBox prefHeight="51.0" prefWidth="77.0">
+               <children>
+                  <Button id="btnSetRefPos" mnemonicParsing="false" text="Set Ref Pos" />
+                  <TextField id="txtRefHeight" promptText="Alt" />
+               </children>
+            </VBox>
+            <VBox prefHeight="51.0" prefWidth="105.0">
+               <children>
+                  <Button id="btnSetCircleHeight" mnemonicParsing="false" text="Set Circle Height" />
+                  <TextField id="txtSetCircleHeight" promptText="Alt" />
+               </children>
+            </VBox>
+            <VBox prefHeight="51.0" prefWidth="89.0">
+               <children>
+                  <Button id="btnSetD0Targ" mnemonicParsing="false" text="Set D0 Target" />
+                  <TextField id="txtD0TargetHeight" promptText="Alt" />
+               </children>
+            </VBox>
+            <VBox prefHeight="51.0" prefWidth="90.0">
+               <children>
+                  <Button id="btnSetD1Targ" mnemonicParsing="false" text="Set D1 Target" />
+                  <TextField id="txtD1TargetHeight" promptText="Alt" />
+               </children>
+            </VBox>
+            <VBox prefHeight="51.0" prefWidth="89.0">
+               <children>
+                  <Button id="btnSetD2Targ" mnemonicParsing="false" text="Set D2 Target" />
+                  <TextField id="txtD2TargetHeight" prefHeight="26.0" prefWidth="72.0" promptText="Alt" />
+               </children>
+            </VBox>
+            <VBox prefHeight="51.0" prefWidth="90.0">
+               <children>
+                  <Button id="btnSetD3Targ" mnemonicParsing="false" text="Set D3 Target" />
+                  <TextField id="txtD3TargetHeight" prefHeight="26.0" prefWidth="86.0" promptText="Alt" />
+               </children>
+            </VBox>
+            <Button id="btnStopAll" mnemonicParsing="false" text="⏸" />
+            <Button id="btnUnpause" mnemonicParsing="false" text="▶" />
+            <Button id="btnSetCircleTargets" mnemonicParsing="false" text="🎯" />
+            <Button id="btnStartCircling" mnemonicParsing="false" text="Start circling!" />
+            <VBox prefHeight="51.0" prefWidth="75.0">
+               <children>
+                  <Button id="btnSetRadius" fx:id="btnSetRadius" mnemonicParsing="false" text="Set Radius" />
+                  <TextField id="txtSetRadius" fx:id="txtSetRadius" promptText="radius (m)" />
+               </children>
+            </VBox>
+            <VBox prefHeight="200.0" prefWidth="130.0">
+               <children>
+                  <Button id="btnSetRotationPeriod" fx:id="btnSetRotationPeriod" mnemonicParsing="false" prefHeight="26.0" prefWidth="127.0" text="Set Rotation Period" />
+                  <TextField id="txtSetRotationPeriod" fx:id="txtSetRotationPeriod" promptText="time (s)" />
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+      <GridPane alignment="center" hgap="10" prefHeight="900.0" prefWidth="1600.0" vgap="10">
+         <columnConstraints>
+            <ColumnConstraints maxWidth="500.0" minWidth="205.0" prefWidth="500.0" />
+            <ColumnConstraints maxWidth="900.0" minWidth="129.0" prefWidth="9000.0" />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints percentHeight="50.0" />
+            <RowConstraints minHeight="10.0" percentHeight="50.0" prefHeight="30.0" />
+         </rowConstraints>
+         <children>
+            <VBox prefHeight="232.0" prefWidth="329.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowSpan="2" GridPane.vgrow="ALWAYS">
+               <children>
+                  <VBox fx:id="listviewLabel" prefHeight="356.0" prefWidth="770.0">
+                     <children>
+                        <Label id="usersLabel" fx:id="usersLabel" text="Label" />
+                        <ListView id="usersList" fx:id="usersList" prefHeight="334.0" prefWidth="900.0" />
+                     </children>
+                  </VBox>
+               </children>
+               <GridPane.margin>
+                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+               </GridPane.margin>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+            </VBox>
+            <HBox maxWidth="-Infinity" prefHeight="100.0" prefWidth="200.0">
+               <GridPane.margin>
+                  <Insets />
+               </GridPane.margin>
+               <children>
+                  <Button id="btnToggleMap" minWidth="30.0" mnemonicParsing="false" text="MAP" />
+                  <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="324.0" prefWidth="271.0">
+                     <children>
+                        <AnchorPane id="selectedPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="262.0" prefWidth="500.0">
+                           <VBox layoutX="10.0" layoutY="10.0" prefHeight="251.0" prefWidth="280.0">
+                              <children>
+                                 <Label id="lblSelectedName" text="Viewing: No one" />
+                                 <Label id="lblVideo" text="Video Feed" />
+                                 <ImageView id="imgSelected" fx:id="imgSelected" fitHeight="250.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true" />
+                                 <HBox prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                    <children>
+                                       <Label id="lblBattery" text="Battery: xx" />
+                                       <Label id="lblHeight" text="Height: xx" />
+                                       <Label id="lblAlt" text="Alt: xxx " />
+                                    </children>
+                                 </HBox>
+                                 <HBox layoutX="10.0" layoutY="194.0" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                    <children>
+                                       <Label id="lblLat" text="Lat: xxxxxxxxxxx" />
+                                       <Label id="lblLong" text="Long: xxxxxxxxxxxx" />
+                                    </children>
+                                 </HBox>
+                                 <HBox layoutX="10.0" layoutY="228.0" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                    <children>
+                                       <Label id="lblYaw" text="Yaw: xxxxxxx" />
+                                    </children>
+                                 </HBox>
+                              </children>
+                           </VBox>
+                        </AnchorPane>
+                        <WebView id="mapView" fx:id="mapView" prefHeight="100.0" prefWidth="292.0" visible="false" />
+                     </children>
+                  </StackPane>
+               </children>
+            </HBox>
+            <VBox prefHeight="200.0" prefWidth="100.0" GridPane.rowIndex="1">
+               <children>
+                  <Label text="green red blue yellow" />
+                  <Button id="btnSetDroneOrder" mnemonicParsing="false" text="demo set drone order" />
+                  <TextField id="txtSetDroneOrder" prefHeight="26.0" prefWidth="222.0" promptText="set order" />
+                  <Button id="btnDemoOut" mnemonicParsing="false" text="demo out" />
+                  <Button id="btnDemoCircle" mnemonicParsing="false" text="set demo circle" />
+                  <Button id="btnStepCircle" mnemonicParsing="false" text="Step circle">
+                     <VBox.margin>
+                        <Insets top="80.0" />
+                     </VBox.margin>
+                  </Button>
+               </children>
+               <padding>
+                  <Insets top="40.0" />
+               </padding>
+            </VBox>
+         </children>
+      </GridPane>
+   </children>
+</VBox>

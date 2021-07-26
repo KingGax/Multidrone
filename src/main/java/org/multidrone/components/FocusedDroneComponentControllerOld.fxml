@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.multidrone.components.FocusedDroneComponentController">
+   <VBox layoutX="10.0" layoutY="10.0" prefHeight="251.0" prefWidth="280.0">
+      <children>
+         <Label id="lblSelectedName" text="Viewing: No one" />
+         <Label id="lblVideo" text="Video Feed" />
+         <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
+         <HBox prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+            <children>
+               <Label id="lblBattery" text="Battery: xx" />
+               <Label id="lblHeight" text="Height: xx" />
+               <Label id="lblAlt" text="Alt:" />
+            </children>
+         </HBox>
+      </children>
+   </VBox>
+</AnchorPane>

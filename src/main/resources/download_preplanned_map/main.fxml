@@ -28,7 +28,7 @@
 <?import javafx.scene.paint.Color?>
 
 <?import com.esri.arcgisruntime.mapping.view.MapView?>
-<StackPane stylesheets="/download_preplanned_map/style.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esri.samples.download_preplanned_map.DownloadPreplannedMapController">
+<StackPane stylesheets="/download_preplanned_map/style.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.multidrone.DownloadPreplannedMapController">
     <MapView fx:id="mapView" />
     <VBox maxHeight="200" maxWidth="220" spacing="10" styleClass="panel-region" StackPane.alignment="TOP_LEFT">
         <padding>
