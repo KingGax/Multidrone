@@ -16,6 +16,7 @@
 
 package com.esri.samples.download_preplanned_map;
 
+import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
 import com.esri.arcgisruntime.ArcGISRuntimeException;
 import com.esri.arcgisruntime.concurrent.Job;
 import com.esri.arcgisruntime.concurrent.ListenableFuture;
@@ -41,6 +42,7 @@ import com.esri.arcgisruntime.symbology.PictureMarkerSymbol;
 import com.esri.arcgisruntime.symbology.SimpleLineSymbol;
 import com.esri.arcgisruntime.symbology.SimpleRenderer;
 import com.esri.arcgisruntime.tasks.offlinemap.*;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -49,9 +51,11 @@ import javafx.geometry.Point2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.multidrone.coordinates.GeodeticCoordinate;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +66,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import java.util.prefs.Preferences;
+
 public class DownloadPreplannedMapController {
 
   @FXML private ListView<PreplannedMapArea> preplannedAreasListView;
@@ -69,7 +75,9 @@ public class DownloadPreplannedMapController {
   @FXML private MapView mapView;
   @FXML private Button downloadButton;
   @FXML private Button btnLoad;
-
+  @FXML private Button btnDownloadScreen;
+  @FXML private ProgressBar progressBar;
+  @FXML private Button btnLoadRecent;
   private GraphicsOverlay markers;
 
   private ArcGISMap onlineMap;
@@ -79,16 +87,26 @@ public class DownloadPreplannedMapController {
 
   private List<Graphic> droneMarkers = new ArrayList<>();
 
-  private PictureMarkerSymbol greenDrone;
-
   private ArcGISMap loadedMap;
 
   private Stage mainStage;
+  Graphic downloadArea;
+  private Preferences prefs;
+  private String lastLoadedPath;
 
+  final String USERNAME_PREF = "username";
+  final String PASSWORD_PREF = "password";
+  final String LAST_LOADED_PREF = "lastloaded";
 
   @FXML
   private void initialize() {
     try {
+
+      downloadArea = new Graphic();
+
+
+
+      prefs = Preferences.userRoot().node(this.getClass().getName());
 
       // create a portal to ArcGIS Online
       Portal portal = new Portal("https://www.arcgis.com/");
@@ -98,7 +116,8 @@ public class DownloadPreplannedMapController {
 
       System.out.println("iintialising");
       // create a portal item using the portal and the item id of a map service
-      PortalItem portalItem = new PortalItem(portal, "acc027394bc84c2fb04d1ed317aac674");
+      //PortalItem portalItem = new PortalItem(portal, "acc027394bc84c2fb04d1ed317aac674");
+      PortalItem portalItem = new PortalItem(portal, "2999a1f15ef141838d662572af458c43");
       System.out.println("loadeded");
       // create a map with the portal item
       onlineMap = new ArcGISMap(portalItem);
@@ -116,9 +135,17 @@ public class DownloadPreplannedMapController {
         String latLonDecimalDegrees = CoordinateFormatter.toLatitudeLongitude(p, CoordinateFormatter
                 .LatitudeLongitudeFormat.DECIMAL_DEGREES, 7);
 
-        System.out.println( latLonDecimalDegrees);
+        System.out.println(latLonDecimalDegrees);
         moveMarker(0, p);
+        GeodeticCoordinate g = parseLatLngString(latLonDecimalDegrees);
+        System.out.println(g.lat + " " + g.lng);
+        moveMarker(1,g.lat,g.lng);
+
       });
+
+      btnLoadRecent.setOnAction(e ->{
+                loadLastMap(e);
+              });
 
       // create a graphics overlay to show the preplanned map areas extents (areas of interest)
       areasOfInterestGraphicsOverlay = new GraphicsOverlay();
@@ -127,6 +154,62 @@ public class DownloadPreplannedMapController {
       markers = new GraphicsOverlay();
       initialiseDroneMarkers();
       mapView.getGraphicsOverlays().add(markers);
+
+      btnDownloadScreen.setOnAction(e -> {
+        if (mapView.getMap().getLoadStatus() == LoadStatus.LOADED) {
+          // upper left corner of the area to take offline
+          Point2D minScreenPoint = new Point2D(50, 50);
+          // lower right corner of the downloaded area
+          Point2D maxScreenPoint = new Point2D(mapView.getWidth() - 50, mapView.getHeight() - 50);
+          // convert screen points to map points
+          Point minPoint = mapView.screenToLocation(minScreenPoint);
+          Point maxPoint = mapView.screenToLocation(maxScreenPoint);
+          // use the points to define and return an envelope
+          if (minPoint != null && maxPoint != null) {
+            Envelope envelope = new Envelope(minPoint, maxPoint);
+            downloadArea.setGeometry(envelope);
+          }
+
+          try {
+            // show the progress bar
+            progressBar.setVisible(true);
+
+            // specify the extent, min scale, and max scale as parameters
+            double minScale = mapView.getMapScale()+2;
+            double maxScale = mapView.getMap().getMaxScale();
+            // minScale must always be larger than maxScale
+            if (minScale <= maxScale) {
+              minScale = maxScale + 1;
+            }
+            GenerateOfflineMapParameters params = new GenerateOfflineMapParameters(downloadArea.getGeometry(), minScale, maxScale);
+
+            // create an offline map task with the map
+            OfflineMapTask task = new OfflineMapTask(mapView.getMap());
+
+            // create an offline map job with the download directory path and parameters and start the job
+            Path tempDirectory = Files.createTempDirectory("offline_map");
+            System.out.println(tempDirectory);
+            GenerateOfflineMapJob job = task.generateOfflineMap(params, tempDirectory.toAbsolutePath().toString());
+            job.start();
+            job.addJobDoneListener(() -> {
+              if (job.getStatus() == Job.Status.SUCCEEDED) {
+                // replace the current map with the result offline map when the job finishes
+                GenerateOfflineMapResult result = job.getResult();
+                mapView.setMap(result.getOfflineMap());
+                btnDownloadScreen.setDisable(true);
+              } else {
+                new Alert(Alert.AlertType.ERROR, job.getError().getAdditionalMessage()).show();
+              }
+              Platform.runLater(() -> progressBar.setVisible(false));
+            });
+            // show the job's progress with the progress bar
+            job.addProgressChangedListener(() -> progressBar.setProgress(job.getProgress() / 100.0));
+          } catch (IOException ex) {
+            new Alert(Alert.AlertType.ERROR, "Failed to create temporary directory").show();
+          }
+        }
+
+      });
 
 
       // create a red outline to mark the areas of interest of the preplanned map areas
@@ -256,6 +339,36 @@ public class DownloadPreplannedMapController {
 
   private Graphic sym = null;
 
+  private GeodeticCoordinate parseLatLngString(String latlng){
+    String[] split = latlng.split(" ");
+    double lat = 0;
+    double lng = 0;
+    try {
+      lng = Double.parseDouble(split[0].substring(0,split[0].length()-1));
+      if (split[0].charAt(split[0].length()-1) == 'S'){
+        lng *= -1;
+      }
+      lat = Double.parseDouble(split[1].substring(0,split[1].length()-1));
+      if (split[1].charAt(split[1].length()-1) == 'W'){
+        lat *= -1;
+      }  else{
+        System.out.println(split[1].charAt(split[1].length()-1));
+      }
+    } catch (Exception e){
+       System.out.println("latLngStr parse failed");
+       return null;
+    }
+
+    return new GeodeticCoordinate(lat,lng,0);
+  }
+
+  private void moveMarker(int id, double lat, double lng) {
+    Point p = new Point(lat,lng,SpatialReferences.getWgs84());
+    Point2D markerPos = mapView.locationToScreen(p);
+    System.out.println(markerPos);
+    droneMarkers.get(id).setGeometry(p);
+  }
+
   private void moveMarker(int id, Point graphicPoint) {
     droneMarkers.get(id).setGeometry(graphicPoint);
 
@@ -329,12 +442,8 @@ public class DownloadPreplannedMapController {
   private void handleDownloadPreplannedAreaButtonClicked() {
     PreplannedMapArea selectedMapArea = preplannedAreasListView.getSelectionModel().getSelectedItem();
     if (selectedMapArea != null) {
-
       // hide the preplanned areas and clear the selection
       preplannedAreasListView.getSelectionModel().clearSelection();
-
-
-
       // create default download parameters from the offline map task
       ListenableFuture<DownloadPreplannedOfflineMapParameters> downloadPreplannedOfflineMapParametersFuture = offlineMapTask.createDefaultDownloadPreplannedOfflineMapParametersAsync(selectedMapArea);
       downloadPreplannedOfflineMapParametersFuture.addDoneListener(() -> {
@@ -348,10 +457,8 @@ public class DownloadPreplannedMapController {
           //Path path = Files.createTempDirectory(selectedMapArea.getPortalItem().getTitle());
           DownloadPreplannedOfflineMapJob downloadPreplannedOfflineMapJob = offlineMapTask.downloadPreplannedOfflineMap(downloadPreplannedOfflineMapParameters, "offline");
           //System.out.println(path.toFile().getAbsolutePath());
-
           // start the job
           downloadPreplannedOfflineMapJob.start();
-
           // track the job in the second list view
           downloadJobsListView.getItems().add(downloadPreplannedOfflineMapJob);
 
@@ -376,43 +483,36 @@ public class DownloadPreplannedMapController {
     mainStage = s;
   }
 
-  public void loadMap(ActionEvent actionEvent) {
-    FileChooser fileChooser = new FileChooser();
-    File selectedFile = fileChooser.showOpenDialog(mainStage);
-    //Portal portal = new Portal("");
-    //portal.setLoginRequired(false);
-    //PortalItem portalItem = new PortalItem(portal, "acc027394bc84c2fb04d1ed317aac674");
-    //Geodatabase geo = new Geodatabase(selectedFile.getPath());
-    //geo.loadAsync();
-    TileCache offlineTileCache = new TileCache(selectedFile.getPath());
-    ArcGISTiledLayer reopenedImagedTileLayer = new ArcGISTiledLayer(offlineTileCache);
-    loadedMap = new ArcGISMap();
-    final Basemap b = new Basemap(reopenedImagedTileLayer);
-    loadedMap.setBasemap(b);
-    mapView.setMap(loadedMap);
-    // create feature layer from geodatabase and add to the map#
+  public void loadLastMap(ActionEvent actionEvent) {
+    String path = prefs.get(LAST_LOADED_PREF,"");
+    if (path != ""){
+      try {
+        TileCache offlineTileCache = new TileCache(path);
+        ArcGISTiledLayer reopenedImagedTileLayer = new ArcGISTiledLayer(offlineTileCache);
+        loadedMap = new ArcGISMap();
+        final Basemap b = new Basemap(reopenedImagedTileLayer);
+        loadedMap.setBasemap(b);
+        mapView.setMap(loadedMap);
+      } catch (Exception e){
 
-    /*geo.addDoneLoadingListener(() -> {
-      if (geo.getLoadStatus() == LoadStatus.LOADED) {
-        // access the geodatabase's feature table Trailheads
-        GeodatabaseFeatureTable geodatabaseFeatureTable = geo.getGeodatabaseFeatureTable("Trailheads");
-        geodatabaseFeatureTable.loadAsync();
-        // create a layer from the geodatabase feature table and add to map
-        final FeatureLayer featureLayer = new FeatureLayer(geodatabaseFeatureTable);
-        featureLayer.addDoneLoadingListener(() -> {
-          if (featureLayer.getLoadStatus() == LoadStatus.LOADED) {
-            // set viewpoint to the feature layer's extent
-            mapView.setViewpointAsync(new Viewpoint(featureLayer.getFullExtent()));
-          } else {
-            System.out.println("Feature failed to load");
-          }
-        });
-        // add feature layer to the map
-        mapView.getMap().getOperationalLayers().add(featureLayer);
-      } else {
-        System.out.println("Geobase failed to load!");
       }
-    });*/
+    }
 
+  }
+
+  public void loadMap(ActionEvent actionEvent) {
+    try {
+      FileChooser fileChooser = new FileChooser();
+      File selectedFile = fileChooser.showOpenDialog(mainStage);
+      prefs.put(LAST_LOADED_PREF,selectedFile.getPath());
+      TileCache offlineTileCache = new TileCache(selectedFile.getPath());
+      ArcGISTiledLayer reopenedImagedTileLayer = new ArcGISTiledLayer(offlineTileCache);
+      loadedMap = new ArcGISMap();
+      final Basemap b = new Basemap(reopenedImagedTileLayer);
+      loadedMap.setBasemap(b);
+      mapView.setMap(loadedMap);
+    } catch (Exception e){
+
+    }
   }
 }

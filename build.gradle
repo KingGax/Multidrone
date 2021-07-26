@@ -35,7 +35,10 @@ dependencies {
     natives "com.esri.arcgisruntime:arcgis-java-jnilibs:$arcgisVersion"
     natives "com.esri.arcgisruntime:arcgis-java-resources:$arcgisVersion"
     implementation 'commons-io:commons-io:2.4'
+    implementation 'org.ejml:ejml-all:0.41'
+
 }
+
 
 task copyNatives(type: Copy) {
     description = "Copies the arcgis native libraries into the project build directory for development."
@@ -51,6 +54,7 @@ run {
     dependsOn copyNatives
     mainClassName = 'com.esri.samples.download_preplanned_map.DownloadPreplannedMapLauncher'
 }
+
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

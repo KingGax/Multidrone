@@ -16,12 +16,15 @@
 
 package com.esri.samples.download_preplanned_map;
 
+import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
+
 /**
  * Wrapper required for launching a JavaFX 11 app through Gradle or from a jar.
  */
 public class DownloadPreplannedMapLauncher {
 
   public static void main(String[] args) {
+    ArcGISRuntimeEnvironment.setInstallDirectory("C:\\Users\\ralph\\.arcgis\\arcgis-runtime-sdk-java-100.11.2");
     DownloadPreplannedMapSample.main(args);
   }
 }
