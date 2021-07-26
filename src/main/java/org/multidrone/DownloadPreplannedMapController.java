@@ -48,6 +48,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.multidrone.coordinates.GeodeticCoordinate;
@@ -73,7 +74,11 @@ public class DownloadPreplannedMapController {
   @FXML private Button btnDownloadScreen;
   @FXML private ProgressBar progressBar;
   @FXML private Button btnLoadRecent;
+  @FXML private Button btnToggleSettings;
+  @FXML private VBox settingsVBox;
   private GraphicsOverlay markers;
+
+  private boolean settingsHidden = false;
 
   private ArcGISMap onlineMap;
   private GraphicsOverlay areasOfInterestGraphicsOverlay;
@@ -509,5 +514,10 @@ public class DownloadPreplannedMapController {
     } catch (Exception e){
 
     }
+  }
+
+  public void toggleSettings(ActionEvent actionEvent) {
+      settingsVBox.setVisible(settingsHidden);
+      settingsHidden = !settingsHidden;
   }
 }

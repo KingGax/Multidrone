@@ -16,6 +16,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -108,7 +109,9 @@ public class Main extends Application {
     Button btnDemoCircle;
     Button btnStepCircle;
 
+    VBox mapVBox;
 
+    static DownloadPreplannedMapController mapController;
 
 
 
@@ -183,6 +186,8 @@ public class Main extends Application {
         backwards = ((Button) mainScene.lookup("#btnBack"));
         home = ((Button) mainScene.lookup("#btnReturnHome"));
         btnSetRefPos = ((Button) mainScene.lookup("#btnSetRefPos"));
+
+        mapVBox = ((VBox) mainScene.lookup("#mapVBox"));
 
         txtSetRefAlt = ((TextField) mainScene.lookup("#txtRefHeight"));
         txtD0TargetHeight = ((TextField) mainScene.lookup("#txtD0TargetHeight"));
@@ -283,6 +288,10 @@ public class Main extends Application {
         systemDropoutTimeChecker.setCycleCount(Timeline.INDEFINITE);
         systemDropoutTimeChecker.play();
 
+        FXMLLoader mapLoader = new FXMLLoader(getClass().getResource("/download_preplanned_map/main.fxml"));
+        Parent mapRoot = mapLoader.load();
+        mapController = mapLoader.getController();
+        mapVBox.getChildren().add(mapRoot);
 
         GeodeticCoordinate gd = new GeodeticCoordinate(60.0409446f,10.04911552f,4.3f);
         GlobalRefrencePoint pt = new GlobalRefrencePoint(60.04094016,10.04911,0);
