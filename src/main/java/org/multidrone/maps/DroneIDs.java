@@ -1,4 +1,4 @@
-package org.multidrone;
+package org.multidrone.maps;
 
 public class DroneIDs {//DRONE IDS MUST START AT 0 AND INCREMENT UPWARDS
 

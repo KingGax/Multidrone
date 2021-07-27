@@ -14,7 +14,7 @@
  *
  */
 
-package org.multidrone;
+package org.multidrone.maps;
 
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
 

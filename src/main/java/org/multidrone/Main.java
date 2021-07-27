@@ -1,14 +1,10 @@
 package org.multidrone;
 
-import com.MAVLink.common.msg_attitude;
-import com.MAVLink.common.msg_global_position_int;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -20,32 +16,22 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import org.multidrone.coordinates.CoordinateTranslator;
 import org.multidrone.coordinates.GeodeticCoordinate;
 import org.multidrone.coordinates.GlobalRefrencePoint;
 import org.multidrone.coordinates.NEDCoordinate;
-import org.multidrone.maps.MapsJavaScriptInterface;
+import org.multidrone.maps.DownloadPreplannedMapController;
 import org.multidrone.server.ServerController;
 import org.multidrone.server.User;
 
 import com.MAVLink.enums.MAV_CMD;
 import org.multidrone.sharedclasses.UserDroneData;
-import netscape.javascript.JSObject;
-
-import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
-import com.esri.arcgisruntime.mapping.ArcGISMap;
-import com.esri.arcgisruntime.mapping.Viewpoint;
-import com.esri.arcgisruntime.mapping.view.MapView;
 
 
 import java.io.IOException;
-import java.net.URL;
 
 
 public class Main extends Application {
@@ -93,8 +79,6 @@ public class Main extends Application {
     Button btnSetRadius;
     Button btnSetRotationPeriod;
 
-    WebView mapView;
-    WebEngine mapEngine;
     ImageView imgSelected;
 
     TextField txtSetRefAlt;
@@ -132,21 +116,14 @@ public class Main extends Application {
     boolean mapLoaded = false;
     boolean circling = false;
 
-    MapsJavaScriptInterface jsInterface;
 
     float clickedLat=-1000;
     float clickedLng=-1000;
-
-    private static Parent loadFXML(String fxml) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
-        return fxmlLoader.load();
-    }
 
     @Override
     public void start(Stage primaryStage) throws Exception{
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/org.multidrone/multidronemain.fxml"));
         Parent root = loader.load();
-        jsInterface = new MapsJavaScriptInterface(this);
 
         //addUser(new User("dave",null,0));
 
@@ -217,41 +194,6 @@ public class Main extends Application {
         btnSetRadius = ((Button) mainScene.lookup("#btnSetRadius"));
         btnRTL = ((Button) mainScene.lookup("#btnRTL"));
 
-
-        mapView = ((WebView) mainScene.lookup("#mapView"));
-
-
-        mapEngine = mapView.getEngine();
-
-        mapEngine.getLoadWorker().exceptionProperty().addListener((javafx.beans.value.ChangeListener<? super Throwable>) (ov, t, t1) -> System.out.println("Received exception: "+t1.getMessage()));
-
-
-        mapEngine.getLoadWorker().stateProperty().addListener(   //This is callback for the webview loading
-                (ObservableValue<? extends Worker.State> observable,
-                 Worker.State oldValue,
-                 Worker.State newValue) -> {
-                    if( newValue != Worker.State.SUCCEEDED ) {
-                        System.out.println(newValue.toString());
-                        JSObject win = (JSObject) mapEngine.executeScript("window");
-                        win.setMember("app", jsInterface);
-                        return;
-                    }
-                    System.out.println("map loaded");
-                    mapLoaded = true;
-                } );
-
-        //mapEngine.loadContent(getClass().getResource("/multidrone/maps/googlemap.html").toString());
-        mapEngine.setJavaScriptEnabled(true);
-        final URL urlGoogleMaps = getClass().getResource("/org.multidrone/maps/googlemap.html");
-        mapEngine.load(urlGoogleMaps.toExternalForm());
-        setupMapToggleButton();
-        //mapEngine.load(getClass().getResource("/multidrone/maps/googlemap.html").toString());
-
-
-
-        //mapEngine.executeScript("document.setMapTypeRoad()");
-        //mapEngine.executeScript("document.goToLocation("+"\"6 Dean Lane\""+")");
-
         sc = ServerController.getInstance();
         sc.fillMain(this);
 
@@ -304,7 +246,7 @@ public class Main extends Application {
         GeodeticCoordinate gdtrans = CoordinateTranslator.nedToGeodetic(nc,pt);
         System.out.println(gdtrans);
 
-        addTestData();
+        //addTestData();
 
         primaryStage.setOnCloseRequest(t -> {
             Platform.exit();
@@ -348,7 +290,7 @@ public class Main extends Application {
     private void setupDemoCircle(){
         btnDemoCircle.setOnAction(e ->{
             sc.setRefPoint(new GlobalRefrencePoint(refCirclePos.lat, refCirclePos.lng, refCirclePos.height));
-            mapEngine.executeScript("document.setRefPoint(" + refCirclePos.lat + "," + refCirclePos.lng + ")");
+            //mapEngine.executeScript("document.setRefPoint(" + refCirclePos.lat + "," + refCirclePos.lng + ")");
             if (mapController.isLoaded()){
                 mapController.moveRefPoint(refCirclePos.lat, refCirclePos.lng);
             }
@@ -462,6 +404,16 @@ public class Main extends Application {
                 sc.updateAttitude(msgat,0);
                 sc.receivePosInt(msg,0);
 
+            }
+            if (u.getID() == 1){
+                msg_global_position_int msg = new msg_global_position_int();
+                msg.lat = (int)(51.42447 *Math.pow(10,7));
+                msg.lon = (int)(-2.6723595*Math.pow(10,7));
+                msg_attitude msgat = new msg_attitude();
+                msgat.yaw = (float) Math.toRadians(lat);
+                sc.updateAttitude(msgat,1);
+                sc.receivePosInt(msg,1);
+
             }*/
         }
 
@@ -502,8 +454,8 @@ public class Main extends Application {
                     float alt = Float.parseFloat(txtSetRefAlt.getText());
                     if (clickedLat != -1000 && clickedLng != -1000) {
                         sc.setRefPoint(new GlobalRefrencePoint(clickedLat, clickedLng, alt));
-                        mapEngine.executeScript("document.setRefPoint(" + clickedLat + "," + clickedLng + ")");
-                        mapEngine.executeScript("document.hideSelectedPointMarker()");
+                        //mapEngine.executeScript("document.setRefPoint(" + clickedLat + "," + clickedLng + ")");
+                        //mapEngine.executeScript("document.hideSelectedPointMarker()");
 
                         if (mapController.isLoaded()){
                             mapController.moveRefPoint(clickedLat,clickedLng);
@@ -586,7 +538,7 @@ public class Main extends Application {
                                 moveTarget(clickedLat,clickedLng,id);
                                 u.target = new GeodeticCoordinate(clickedLat,clickedLng,alt);
                                 u.targetYaw = u.data.yaw;
-                                mapEngine.executeScript("document.hideSelectedPointMarker()");
+                                //mapEngine.executeScript("document.hideSelectedPointMarker()");
                                 if (mapController.isLoaded()){
                                     mapController.hideClickedPoint();
                                 }
@@ -633,13 +585,13 @@ public class Main extends Application {
         });
     }
 
-    void setupMapToggleButton(){
+    /*void setupMapToggleButton(){
         toggleMapButton.setOnAction(e -> {
             boolean isVisible = mapView.isVisible();
             mapView.setVisible(!isVisible);
 
         });
-    }
+    }*/
 
     void setupHomeButton(){
         home.setOnAction(e -> goHomeConfirmation.showAndWait().ifPresent(response -> {
@@ -764,9 +716,9 @@ public class Main extends Application {
 
     public void moveMarker(float lat, float lng, int id){
         Platform.runLater(() -> {
-            if (mapLoaded){
+            /*if (mapLoaded){
                 mapEngine.executeScript("document.moveMarker("+lat+","+lng+","+id+")");
-            }
+            }*/
             if (mapController.isLoaded()){
                 mapController.moveMarker(id,lat,lng);
             }
@@ -775,12 +727,12 @@ public class Main extends Application {
 
     public void moveMarker(User u){
         Platform.runLater(() -> {
-            if (mapLoaded){
+            /*if (mapLoaded){
                 mapEngine.executeScript("document.moveMarker("+u.data.lat+","+u.data.lng+","+u.getID()+")");
                 if (u.forwardPoint != null){
                     mapEngine.executeScript("document.moveSightMarker("+u.forwardPoint.lat+","+u.forwardPoint.lng+","+u.getID()+")");
                 }
-            }
+            }*/
             if (mapController.isLoaded()){
                 mapController.moveMarker(u.getID(),u.data.lat,u.data.lng);
                 if (u.forwardPoint != null){
@@ -792,9 +744,9 @@ public class Main extends Application {
 
     public void moveTarget(float lat, float lng, int id){
         Platform.runLater(() -> {
-            if (mapLoaded){
+            /*if (mapLoaded){
                 mapEngine.executeScript("document.moveTarget("+lat+","+lng+","+id+")");
-            }
+            }*/
             if (mapController.isLoaded()){
                 mapController.moveTarget(id,lat,lng);
             }
@@ -854,8 +806,11 @@ public class Main extends Application {
         });*/
 
         Platform.runLater(() -> {
-            if (mapLoaded){
+            /*if (mapLoaded){
                 mapEngine.executeScript("document.focusOnMarkers()");
+            }*/
+            if (mapController.isLoaded()){
+                mapController.focusDrones();
             }
         });
     }

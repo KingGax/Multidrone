@@ -14,7 +14,7 @@
  *
  */
 
-package org.multidrone;
+package org.multidrone.maps;
 
 import com.esri.arcgisruntime.ArcGISRuntimeException;
 import com.esri.arcgisruntime.concurrent.Job;
@@ -50,10 +50,11 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.MoveTo;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.commons.io.FilenameUtils;
+import org.multidrone.Main;
+import org.multidrone.maps.PreplannedMapAreaListCell;
 import org.multidrone.coordinates.GeodeticCoordinate;
 
 import java.io.File;
@@ -134,41 +135,12 @@ public class DownloadPreplannedMapController {
 
       //add onclick
       mapView.setOnMouseClicked(e -> {
-        System.out.println(e.getX() + " " + e.getX() + " " + e.getY());
         Point p = mapView.screenToLocation(new Point2D(e.getX(),e.getY()));
-
         String latLonDecimalDegrees = CoordinateFormatter.toLatitudeLongitude(p, CoordinateFormatter
                 .LatitudeLongitudeFormat.DECIMAL_DEGREES, 7);
-
-        System.out.println(latLonDecimalDegrees);
-        //moveMarker(0, p);
         GeodeticCoordinate g = parseLatLngString(latLonDecimalDegrees);
-        System.out.println(g.lat + " " + g.lng);
         parent.setSelectedCoordinate((float)g.lat,(float)g.lng);
         moveClickedPoint(g.lat,g.lng);
-        /*moveMarker(0,g.lat+0.01,g.lng);
-        moveMarker(1,g.lat+0.02,g.lng);
-        moveMarker(2,g.lat+0.03,g.lng);
-        moveMarker(3,g.lat+0.04,g.lng);
-        moveMarker(4,g.lat+0.05,g.lng);
-        moveMarker(5,g.lat+0.06,g.lng);
-        moveMarker(6,g.lat+0.07,g.lng);
-        moveMarker(7,g.lat+0.08,g.lng);
-        moveMarker(8,g.lat+0.09,g.lng);
-        moveMarker(9,g.lat+0.1,g.lng);
-
-        moveTarget(0,g.lat+0.01,g.lng+0.1);
-        moveTarget(1,g.lat+0.02,g.lng+0.1);
-        moveTarget(2,g.lat+0.03,g.lng+0.1);
-        moveTarget(3,g.lat+0.04,g.lng+0.1);
-        moveTarget(4,g.lat+0.05,g.lng+0.1);
-        moveTarget(5,g.lat+0.06,g.lng+0.1);
-        moveTarget(6,g.lat+0.07,g.lng+0.1);
-        moveTarget(7,g.lat+0.08,g.lng+0.1);
-        moveTarget(8,g.lat+0.09,g.lng+0.1);
-        moveTarget(9,g.lat+0.1,g.lng+0.1);*/
-
-
       });
 
       btnLoadRecent.setOnAction(e ->{
@@ -368,6 +340,17 @@ public class DownloadPreplannedMapController {
       // on any exception, print the stacktrace
       e.printStackTrace();
     }
+  }
+
+  public void focusDrones(){
+    PointCollection dronePoints = new PointCollection(SpatialReferences.getWgs84());
+    for (Graphic drone: droneMarkers) {
+      if (drone.getGeometry() != null){
+        dronePoints.add(drone.getGeometry().getExtent().getCenter());
+      }
+    }
+    Geometry g = new Polyline(dronePoints);
+    mapView.setViewpointGeometryAsync(g);
   }
 
   private void initialiseSightMarkers() {
@@ -693,6 +676,7 @@ public class DownloadPreplannedMapController {
       loadedMap = new ArcGISMap();
       loadedMap.setBasemap(b);
       mapView.setMap(loadedMap);
+      btnDownloadScreen.setDisable(true);
     } else{
       new Alert(Alert.AlertType.ERROR, "File type invalid, use tpk or vtpk").show();
     }

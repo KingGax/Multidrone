@@ -1,4 +1,4 @@
-package org.multidrone;
+package org.multidrone.maps;
 
 import com.esri.arcgisruntime.tasks.offlinemap.DownloadPreplannedOfflineMapJob;
 import javafx.scene.control.ListCell;

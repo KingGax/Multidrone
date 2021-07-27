@@ -14,7 +14,7 @@
  *
  */
 
-package org.multidrone;
+package org.multidrone.maps;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

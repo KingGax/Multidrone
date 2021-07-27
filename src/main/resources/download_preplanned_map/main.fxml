@@ -22,7 +22,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
 
-<StackPane stylesheets="/download_preplanned_map/style.css" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.multidrone.DownloadPreplannedMapController">
+<StackPane stylesheets="/download_preplanned_map/style.css" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.multidrone.maps.DownloadPreplannedMapController">
     <MapView fx:id="mapView" />
     <VBox fx:id="settingsVBox" maxHeight="200" maxWidth="220" spacing="10" styleClass="panel-region" StackPane.alignment="TOP_LEFT">
         <padding>
@@ -50,11 +50,11 @@
         <Button fx:id="downloadButton" minWidth="200" onAction="#handleDownloadPreplannedAreaButtonClicked" text="Download" />
         <Label text="Downloads (deleted on exit):" />
         <ListView fx:id="downloadJobsListView" maxHeight="100" maxWidth="200" minHeight="100" />
-      <Button fx:id="btnDownloadScreen" mnemonicParsing="false" prefHeight="12.0" prefWidth="200.0" text="Download Screen" />
+        <Button fx:id="btnLoadRecent" mnemonicParsing="false" prefHeight="26.0" prefWidth="199.0" text="Load Recent" />
+        <Button fx:id="btnDownloadScreen" mnemonicParsing="false" prefHeight="12.0" prefWidth="200.0" text="Download Screen" />
       <ProgressBar fx:id="progressBar" minHeight="10.0" prefHeight="12.0" prefWidth="200.0" progress="0.0" />
       <Button fx:id="btnOnlineMap" mnemonicParsing="false" prefHeight="25.0" prefWidth="200.0" text="Load Online Map" />
         <Button fx:id="btnLoad" minWidth="200" onAction="#loadMapButtonEvent" text="Load New File" />
-      <Button fx:id="btnLoadRecent" mnemonicParsing="false" prefHeight="26.0" prefWidth="199.0" text="Load Recent" />
     </VBox>
    <Button fx:id="btnToggleSettings" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#toggleSettings" text="⚙" StackPane.alignment="TOP_LEFT" />
 </StackPane>

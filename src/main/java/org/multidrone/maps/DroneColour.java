@@ -1,4 +1,4 @@
-package org.multidrone;
+package org.multidrone.maps;
 
 public enum DroneColour {
 
