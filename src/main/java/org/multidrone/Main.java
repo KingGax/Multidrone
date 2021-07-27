@@ -1,5 +1,7 @@
 package org.multidrone;
 
+import com.MAVLink.common.msg_attitude;
+import com.MAVLink.common.msg_global_position_int;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -291,6 +293,7 @@ public class Main extends Application {
         FXMLLoader mapLoader = new FXMLLoader(getClass().getResource("/download_preplanned_map/main.fxml"));
         Parent mapRoot = mapLoader.load();
         mapController = mapLoader.getController();
+        mapController.setParent(this);
         mapVBox.getChildren().add(mapRoot);
 
         GeodeticCoordinate gd = new GeodeticCoordinate(60.0409446f,10.04911552f,4.3f);
@@ -346,6 +349,9 @@ public class Main extends Application {
         btnDemoCircle.setOnAction(e ->{
             sc.setRefPoint(new GlobalRefrencePoint(refCirclePos.lat, refCirclePos.lng, refCirclePos.height));
             mapEngine.executeScript("document.setRefPoint(" + refCirclePos.lat + "," + refCirclePos.lng + ")");
+            if (mapController.isLoaded()){
+                mapController.moveRefPoint(refCirclePos.lat, refCirclePos.lng);
+            }
             txtSetRefAlt.setPromptText(Double.toString(refCirclePos.height));
             txtSetRefAlt.setText("");
             txtSetCircleHeight.setPromptText(Float.toString(demoVerticalCircleOffset));
@@ -498,6 +504,11 @@ public class Main extends Application {
                         sc.setRefPoint(new GlobalRefrencePoint(clickedLat, clickedLng, alt));
                         mapEngine.executeScript("document.setRefPoint(" + clickedLat + "," + clickedLng + ")");
                         mapEngine.executeScript("document.hideSelectedPointMarker()");
+
+                        if (mapController.isLoaded()){
+                            mapController.moveRefPoint(clickedLat,clickedLng);
+                            mapController.hideClickedPoint();
+                        }
                         txtSetRefAlt.setPromptText(txtSetRefAlt.getText());
                         txtSetRefAlt.setText("");
                         clickedLat = -1000;
@@ -576,6 +587,9 @@ public class Main extends Application {
                                 u.target = new GeodeticCoordinate(clickedLat,clickedLng,alt);
                                 u.targetYaw = u.data.yaw;
                                 mapEngine.executeScript("document.hideSelectedPointMarker()");
+                                if (mapController.isLoaded()){
+                                    mapController.hideClickedPoint();
+                                }
                                 txt.setPromptText(txt.getText());
                                 txt.setText("");
                                 clickedLat = -1000;
@@ -753,6 +767,9 @@ public class Main extends Application {
             if (mapLoaded){
                 mapEngine.executeScript("document.moveMarker("+lat+","+lng+","+id+")");
             }
+            if (mapController.isLoaded()){
+                mapController.moveMarker(id,lat,lng);
+            }
         });
     }
 
@@ -764,6 +781,12 @@ public class Main extends Application {
                     mapEngine.executeScript("document.moveSightMarker("+u.forwardPoint.lat+","+u.forwardPoint.lng+","+u.getID()+")");
                 }
             }
+            if (mapController.isLoaded()){
+                mapController.moveMarker(u.getID(),u.data.lat,u.data.lng);
+                if (u.forwardPoint != null){
+                    mapController.moveSightMarker(u.getID(),u.forwardPoint.lat,u.forwardPoint.lng);
+                }
+            }
         });
     }
 
@@ -771,6 +794,9 @@ public class Main extends Application {
         Platform.runLater(() -> {
             if (mapLoaded){
                 mapEngine.executeScript("document.moveTarget("+lat+","+lng+","+id+")");
+            }
+            if (mapController.isLoaded()){
+                mapController.moveTarget(id,lat,lng);
             }
         });
     }

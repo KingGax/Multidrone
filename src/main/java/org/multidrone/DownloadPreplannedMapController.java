@@ -23,6 +23,7 @@ import com.esri.arcgisruntime.data.FeatureTable;
 import com.esri.arcgisruntime.data.TileCache;
 import com.esri.arcgisruntime.geometry.*;
 import com.esri.arcgisruntime.layers.ArcGISTiledLayer;
+import com.esri.arcgisruntime.layers.ArcGISVectorTiledLayer;
 import com.esri.arcgisruntime.layers.Layer;
 import com.esri.arcgisruntime.loadable.LoadStatus;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
@@ -49,8 +50,10 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.MoveTo;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.io.FilenameUtils;
 import org.multidrone.coordinates.GeodeticCoordinate;
 
 import java.io.File;
@@ -76,7 +79,7 @@ public class DownloadPreplannedMapController {
   @FXML private Button btnLoadRecent;
   @FXML private Button btnToggleSettings;
   @FXML private VBox settingsVBox;
-  private GraphicsOverlay markers;
+  private GraphicsOverlay markers = new GraphicsOverlay();
 
   private boolean settingsHidden = false;
 
@@ -86,10 +89,13 @@ public class DownloadPreplannedMapController {
   private List<PreplannedMapArea> preplannedMapAreas; // keep loadable in scope to avoid garbage collection
 
   private List<Graphic> droneMarkers = new ArrayList<>();
+  private List<Graphic> targetMarkers = new ArrayList<>();
+  private List<Graphic> sightMarkers = new ArrayList<>();
 
   private ArcGISMap loadedMap;
 
   private Stage mainStage;
+  private Main parent;
   Graphic downloadArea;
   private Preferences prefs;
   private String lastLoadedPath;
@@ -98,13 +104,14 @@ public class DownloadPreplannedMapController {
   final String PASSWORD_PREF = "password";
   final String LAST_LOADED_PREF = "lastloaded";
 
+  Graphic clickedPoint;
+  Graphic refPoint;
+
   @FXML
   private void initialize() {
     try {
 
       downloadArea = new Graphic();
-
-
 
       prefs = Preferences.userRoot().node(this.getClass().getName());
 
@@ -114,11 +121,9 @@ public class DownloadPreplannedMapController {
       // set the authentication manager to handle OAuth challenges when accessing the portal
       AuthenticationManager.setAuthenticationChallengeHandler(new DefaultAuthenticationChallengeHandler());
 
-      System.out.println("iintialising");
       // create a portal item using the portal and the item id of a map service
       //PortalItem portalItem = new PortalItem(portal, "acc027394bc84c2fb04d1ed317aac674");
       PortalItem portalItem = new PortalItem(portal, "2999a1f15ef141838d662572af458c43");
-      System.out.println("loadeded");
       // create a map with the portal item
       onlineMap = new ArcGISMap(portalItem);
 
@@ -136,10 +141,33 @@ public class DownloadPreplannedMapController {
                 .LatitudeLongitudeFormat.DECIMAL_DEGREES, 7);
 
         System.out.println(latLonDecimalDegrees);
-        moveMarker(0, p);
+        //moveMarker(0, p);
         GeodeticCoordinate g = parseLatLngString(latLonDecimalDegrees);
         System.out.println(g.lat + " " + g.lng);
-        moveMarker(1,g.lat,g.lng);
+        parent.setSelectedCoordinate((float)g.lat,(float)g.lng);
+        moveClickedPoint(g.lat,g.lng);
+        /*moveMarker(0,g.lat+0.01,g.lng);
+        moveMarker(1,g.lat+0.02,g.lng);
+        moveMarker(2,g.lat+0.03,g.lng);
+        moveMarker(3,g.lat+0.04,g.lng);
+        moveMarker(4,g.lat+0.05,g.lng);
+        moveMarker(5,g.lat+0.06,g.lng);
+        moveMarker(6,g.lat+0.07,g.lng);
+        moveMarker(7,g.lat+0.08,g.lng);
+        moveMarker(8,g.lat+0.09,g.lng);
+        moveMarker(9,g.lat+0.1,g.lng);
+
+        moveTarget(0,g.lat+0.01,g.lng+0.1);
+        moveTarget(1,g.lat+0.02,g.lng+0.1);
+        moveTarget(2,g.lat+0.03,g.lng+0.1);
+        moveTarget(3,g.lat+0.04,g.lng+0.1);
+        moveTarget(4,g.lat+0.05,g.lng+0.1);
+        moveTarget(5,g.lat+0.06,g.lng+0.1);
+        moveTarget(6,g.lat+0.07,g.lng+0.1);
+        moveTarget(7,g.lat+0.08,g.lng+0.1);
+        moveTarget(8,g.lat+0.09,g.lng+0.1);
+        moveTarget(9,g.lat+0.1,g.lng+0.1);*/
+
 
       });
 
@@ -151,8 +179,11 @@ public class DownloadPreplannedMapController {
       areasOfInterestGraphicsOverlay = new GraphicsOverlay();
       mapView.getGraphicsOverlays().add(areasOfInterestGraphicsOverlay);
 
-      markers = new GraphicsOverlay();
       initialiseDroneMarkers();
+      initialiseTargetMarkers();
+      initialiseSightMarkers();
+      loadClickMarker();
+      loadRefMarker();
       mapView.getGraphicsOverlays().add(markers);
 
       btnDownloadScreen.setOnAction(e -> {
@@ -188,6 +219,7 @@ public class DownloadPreplannedMapController {
 
             // create an offline map job with the download directory path and parameters and start the job
             Path tempDirectory = Files.createTempDirectory("offline_map");
+
             System.out.println(tempDirectory);
             GenerateOfflineMapJob job = task.generateOfflineMap(params, tempDirectory.toAbsolutePath().toString());
             job.start();
@@ -195,6 +227,7 @@ public class DownloadPreplannedMapController {
               if (job.getStatus() == Job.Status.SUCCEEDED) {
                 // replace the current map with the result offline map when the job finishes
                 GenerateOfflineMapResult result = job.getResult();
+                new Alert(Alert.AlertType.INFORMATION, tempDirectory.toAbsolutePath().toString()).show();
                 mapView.setMap(result.getOfflineMap());
                 btnDownloadScreen.setDisable(true);
               } else {
@@ -337,20 +370,101 @@ public class DownloadPreplannedMapController {
     }
   }
 
-  private Graphic sym = null;
+  private void initialiseSightMarkers() {
+    for (DroneColour dc : DroneColour.values()) {
+      sightMarkers.add(new Graphic());
+    }
+    for (DroneColour dc : DroneColour.values()) {
+      Image newImage = new Image("download_preplanned_map/mapres/drones/viewmarker.png");
+      PictureMarkerSymbol markerSymbol = new PictureMarkerSymbol(newImage);
+      // set size of the image
+      markerSymbol.setHeight(10);
+      markerSymbol.setWidth(10);
+      // load symbol asynchronously
+      markerSymbol.loadAsync();
+
+      // add to the graphic overlay once done loading
+      PictureMarkerSymbol finalMarkerSymbol = markerSymbol;
+      markerSymbol.addDoneLoadingListener(() -> {
+        if (finalMarkerSymbol.getLoadStatus() == LoadStatus.LOADED) {
+          sightMarkers.get(dc.id).setSymbol(finalMarkerSymbol);
+          markers.getGraphics().add(sightMarkers.get(dc.id));
+        } else {
+          Alert alert = new Alert(Alert.AlertType.ERROR, "Picture Marker Symbol Failed to Load!");
+          alert.show();
+        }
+      });
+    }
+  }
+
+  private void loadClickMarker() {
+    Image newImage = new Image("download_preplanned_map/mapres/targets/selectedpoint.png");
+    PictureMarkerSymbol markerSymbol = new PictureMarkerSymbol(newImage);
+    // set size of the image
+    markerSymbol.setHeight(20);
+    markerSymbol.setWidth(30);
+    // load symbol asynchronously
+    markerSymbol.loadAsync();
+    // add to the graphic overlay once done loading
+    PictureMarkerSymbol finalMarkerSymbol = markerSymbol;
+    markerSymbol.addDoneLoadingListener(() -> {
+      if (finalMarkerSymbol.getLoadStatus() == LoadStatus.LOADED) {
+        clickedPoint = new Graphic();
+        clickedPoint.setSymbol(finalMarkerSymbol);
+        markers.getGraphics().add(clickedPoint);
+      } else {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "Picture Marker Symbol Failed to Load!");
+        alert.show();
+      }
+    });
+  }
+  private void loadRefMarker() {
+    Image newImage = new Image("download_preplanned_map/mapres/targets/refrencepos.png");
+    PictureMarkerSymbol markerSymbol = new PictureMarkerSymbol(newImage);
+    // set size of the image
+    markerSymbol.setHeight(20);
+    markerSymbol.setWidth(30);
+    // load symbol asynchronously
+    markerSymbol.loadAsync();
+    // add to the graphic overlay once done loading
+    PictureMarkerSymbol finalMarkerSymbol = markerSymbol;
+    markerSymbol.addDoneLoadingListener(() -> {
+      if (finalMarkerSymbol.getLoadStatus() == LoadStatus.LOADED) {
+        refPoint = new Graphic();
+        refPoint.setSymbol(finalMarkerSymbol);
+        markers.getGraphics().add(refPoint);
+      } else {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "Picture Marker Symbol Failed to Load!");
+        alert.show();
+      }
+    });
+  }
+
+  public boolean isLoaded(){
+    if (mapView.getMap() !=  null){
+      if (mapView.getMap().getLoadStatus() == LoadStatus.LOADED) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void setParent(Main _parent){
+    parent = _parent;
+  }
 
   private GeodeticCoordinate parseLatLngString(String latlng){
     String[] split = latlng.split(" ");
     double lat = 0;
     double lng = 0;
     try {
-      lng = Double.parseDouble(split[0].substring(0,split[0].length()-1));
+      lat = Double.parseDouble(split[0].substring(0,split[0].length()-1));
       if (split[0].charAt(split[0].length()-1) == 'S'){
-        lng *= -1;
-      }
-      lat = Double.parseDouble(split[1].substring(0,split[1].length()-1));
-      if (split[1].charAt(split[1].length()-1) == 'W'){
         lat *= -1;
+      }
+      lng = Double.parseDouble(split[1].substring(0,split[1].length()-1));
+      if (split[1].charAt(split[1].length()-1) == 'W'){
+        lng *= -1;
       }  else{
         System.out.println(split[1].charAt(split[1].length()-1));
       }
@@ -362,11 +476,43 @@ public class DownloadPreplannedMapController {
     return new GeodeticCoordinate(lat,lng,0);
   }
 
-  private void moveMarker(int id, double lat, double lng) {
-    Point p = new Point(lat,lng,SpatialReferences.getWgs84());
+  private Point latLngToPoint(double lat, double lng){
+    return new Point(lng,lat,SpatialReferences.getWgs84());
+  }
+
+  public void moveMarker(int id, double lat, double lng) {
+    Point p = latLngToPoint(lat,lng);
     Point2D markerPos = mapView.locationToScreen(p);
     System.out.println(markerPos);
     droneMarkers.get(id).setGeometry(p);
+  }
+
+  public void moveSightMarker(int id, double lat, double lng) {
+    Point p = latLngToPoint(lat,lng);
+    sightMarkers.get(id).setGeometry(p);
+  }
+
+  public void moveTarget(int id, double lat, double lng) {
+    Point p = latLngToPoint(lat,lng);
+    targetMarkers.get(id).setGeometry(p);
+  }
+
+
+
+  public void moveClickedPoint(double lat, double lng) {
+    Point p = latLngToPoint(lat,lng);
+    clickedPoint.setVisible(true);
+    clickedPoint.setGeometry(p);
+  }
+
+  public void hideClickedPoint() {
+    clickedPoint.setVisible(false);
+  }
+
+  public void moveRefPoint(double lat, double lng) {
+    Point p = latLngToPoint(lat,lng);
+    Point2D markerPos = mapView.locationToScreen(p);
+    refPoint.setGeometry(p);
   }
 
   private void moveMarker(int id, Point graphicPoint) {
@@ -435,6 +581,39 @@ public class DownloadPreplannedMapController {
     }
   }
 
+  void initialiseTargetMarkers(){
+
+    for (DroneColour dc : DroneColour.values()) {
+      targetMarkers.add(new Graphic());
+    }
+    for (DroneColour dc : DroneColour.values()){
+      System.out.println(dc.id);
+      System.out.println(dc.targetFilePath);
+      Image newImage = new Image(dc.targetFilePath);
+      PictureMarkerSymbol markerSymbol = new PictureMarkerSymbol(newImage);
+
+      // set size of the image
+      markerSymbol.setHeight(20);
+      markerSymbol.setWidth(30);
+
+      // load symbol asynchronously
+      markerSymbol.loadAsync();
+
+
+      // add to the graphic overlay once done loading
+      PictureMarkerSymbol finalMarkerSymbol = markerSymbol;
+      markerSymbol.addDoneLoadingListener(() -> {
+        if (finalMarkerSymbol.getLoadStatus() == LoadStatus.LOADED) {
+          targetMarkers.get(dc.id).setSymbol(finalMarkerSymbol);
+          markers.getGraphics().add(targetMarkers.get(dc.id));
+        } else {
+          Alert alert = new Alert(Alert.AlertType.ERROR, "Picture Marker Symbol Failed to Load!");
+          alert.show();
+        }
+      });
+    }
+  }
+
   /**
    * Download the selected preplanned map area from the list view to a temporary directory. The download job is tracked in another list view.
    */
@@ -487,30 +666,51 @@ public class DownloadPreplannedMapController {
     String path = prefs.get(LAST_LOADED_PREF,"");
     if (path != ""){
       try {
-        TileCache offlineTileCache = new TileCache(path);
-        ArcGISTiledLayer reopenedImagedTileLayer = new ArcGISTiledLayer(offlineTileCache);
-        loadedMap = new ArcGISMap();
-        final Basemap b = new Basemap(reopenedImagedTileLayer);
-        loadedMap.setBasemap(b);
-        mapView.setMap(loadedMap);
+        loadMap(path);
       } catch (Exception e){
 
       }
+    } else{
+      new Alert(Alert.AlertType.ERROR, "No file recently loaded").show();
     }
+  }
+
+  private void  loadMap(String s){
+    String type = FilenameUtils.getExtension(s);
+    System.out.println(type);
+    final Basemap b;
+    if (type.equals("vtpk")){
+      ArcGISVectorTiledLayer localVectorTiledLayer = new ArcGISVectorTiledLayer(s);
+      b = new Basemap(localVectorTiledLayer);
+    } else if (type.equals("tpk")){
+      TileCache offlineTileCache = new TileCache(s);
+      ArcGISTiledLayer reopenedImagedTileLayer = new ArcGISTiledLayer(offlineTileCache);
+      b = new Basemap(reopenedImagedTileLayer);
+    } else{
+      b = null;
+    }
+    if (b != null){
+      loadedMap = new ArcGISMap();
+      loadedMap.setBasemap(b);
+      mapView.setMap(loadedMap);
+    } else{
+      new Alert(Alert.AlertType.ERROR, "File type invalid, use tpk or vtpk").show();
+    }
+  }
+
+  private void loadOnlineMap(){
 
   }
 
-  public void loadMap(ActionEvent actionEvent) {
+  public void loadMapButtonEvent(ActionEvent actionEvent) {
     try {
       FileChooser fileChooser = new FileChooser();
+      File workingDirectory = new File(System.getProperty("user.dir"));
+      fileChooser.setInitialDirectory(workingDirectory);
       File selectedFile = fileChooser.showOpenDialog(mainStage);
       prefs.put(LAST_LOADED_PREF,selectedFile.getPath());
-      TileCache offlineTileCache = new TileCache(selectedFile.getPath());
-      ArcGISTiledLayer reopenedImagedTileLayer = new ArcGISTiledLayer(offlineTileCache);
-      loadedMap = new ArcGISMap();
-      final Basemap b = new Basemap(reopenedImagedTileLayer);
-      loadedMap.setBasemap(b);
-      mapView.setMap(loadedMap);
+      loadMap(selectedFile.getPath());
+
     } catch (Exception e){
 
     }
