@@ -41,7 +41,6 @@ public class ServerController {
 	final String idHeader =  "i";
 	final String messageHeader =  "m";
 
-	private GeodeticCoordinate targ;
 	private float targetYaw;
 
 	private StreamReceiver videoRecv = new StreamReceiver();
@@ -50,16 +49,16 @@ public class ServerController {
 		return refPoint;
 	}
 
+	//Sets refrence server uses for distance calculations and local xy calculations
 	public void setRefPoint(GlobalRefrencePoint ref){
 		refPoint = ref;
 		swarmController.setGlobalRef(ref);
-		GeodeticCoordinate target = new GeodeticCoordinate((float)ref.lat +0.002f,(float)ref.lng+0.002f,(float)ref.h+10);
-		targ = target;
 		System.out.println("set ref point");
 	}
 
 	private ServerController() {
 		this.initializeNotificationListener();
+		//Uses server executor to send mav messages with threads
 		serverExecutor = Executors.newSingleThreadExecutor();
 		swarmController.setUserList(users);
 		initializeSwarmController();
@@ -82,12 +81,13 @@ public class ServerController {
 
 	}
 	
-	
+	//This is listening for new drones to join
 	private void initializeNotificationListener() {
 		Thread notificationsThread = new Thread(this.notificationListener);
 		notificationsThread.start();
 	}
 
+	//Creates a data listener for a given user id, this is where the drone sends all mav link messages
 	private DataListener initializeDataListener(int id) {
 		DataListener newDataListener = new DataListener();
 		newDataListener.setMyID(id);
@@ -114,7 +114,8 @@ public class ServerController {
 	public void setSwarmControllerActive(boolean active){
 		swarmController.setControlLoopActive(active);
 	}
-	
+
+	//Sends messages for initial handshakes
 	public void transmitMessage(User user, String msg) throws Exception {
 		DatagramSocket socket = new DatagramSocket(); 
 		byte[] buffer = msg.getBytes();	
@@ -126,16 +127,16 @@ public class ServerController {
 	public ObservableList<User> getUsers() {
 		return users;
 	}
-	
+
+	//This is called by the notification listener when a phone sends a connection handshake
 	public void addUser(User user) {
-		if (!users.contains(user)){
+		if (!users.contains(user)){//if a new user set id and open new data listener
 			user.setID(currentID);
 			currentID++;
 			user.data = new UserDroneData();
 			DataListener newListener = initializeDataListener(user.getID());
 			user.setDataPort(newListener.getMyPort());
 			this.users.add(user);
-			main.addUser(user);
 
 			dataListeners.add(newListener);
 			try{
@@ -145,10 +146,10 @@ public class ServerController {
 			}
 
 			sendID(user,user.getID(),newListener.getMyPort());
-		} else{
+		} else{ //if the user already exists
 			for (User u: users) {
 				if (u.equals(user)){
-					sendID(u,u.getID(),u.getDataPort());
+					sendID(u,u.getID(),u.getDataPort());//re send the user their ID and data listener
 					System.out.println("found user " + u.getID());
 				}
 			}
@@ -257,9 +258,8 @@ public class ServerController {
 		});
 	}
 
-	public void testSendUserTarget(User u){
+	public void sendUserTarget(User u){
 		sendSetPosTargetGlobalCommand(u,u.target.lat,u.target.lng,u.targetYaw,u.target.height);
-		System.out.println("TARGET global lat:" + u.target.lat + " lng: " + u.target.lng + " h: " + u.target.height + " yaw: " + u.data.yaw);
 	}
 
 	public void sendSetPosTargetGlobalCommand(User user, double lat, double lng, double yaw, double alt){
@@ -303,6 +303,7 @@ public class ServerController {
 		this.users.remove(user);
 	}
 
+	//It can receive user drone data for testing, currently unused outside of testing
 	public void handleData(UserDroneData data){
 		System.out.println(data.batteryPercent + " " +  data.height + " " + data.id);
 		for (User u:users) {
@@ -317,6 +318,7 @@ public class ServerController {
 		}
 	}
 
+	//Sets target marker on main, used by the swarm controller
 	public void setTargetMarker(GeodeticCoordinate gc, int id){
 		main.moveTarget((float)gc.lat,(float)gc.lng,id);
 	}
@@ -331,6 +333,7 @@ public class ServerController {
 		}
 	}
 
+	//Enable and disable circling, if circling is enabled then set the reference point as the region of interest
 	public void setCirclingEnabled(boolean enabled){
 		if (refPoint != null){
 			if (enabled) {
@@ -353,6 +356,7 @@ public class ServerController {
 		swarmController.setInitialTargets(users.size());
 	}
 
+	//For receiving command ports and sysids from drones
 	public void updateMavDetails(int userID, int mavPort, short systemID){
 		for (User u:users) {
 			if (u.getID() == userID){
@@ -373,8 +377,8 @@ public class ServerController {
 				" \nprojected: \n" + u.projectedPos.x + " " + u.projectedPos.y + " " + u.projectedPos.z);
 	}
 
+	//Processes the global_pos_int command. It also calculates xyz relative to refrence point and a point in front of the drone to plot on the map to show yaw direction
 	public void receivePosInt(msg_global_position_int msg, int userID) {
-		//System.out.println("Updating height " + relative_alt);
 		for (User u:users) {
 			if (u.getID() == userID){
 				u.data.height = (float) (msg.relative_alt / Math.pow(10,3));
@@ -395,8 +399,8 @@ public class ServerController {
 					u.data.xBOD = (float) bodyCoord.x;
 					u.data.yBOD = (float) bodyCoord.y;
 					u.data.zBOD = (float) bodyCoord.z;
+					//calculates forward point by adding a body frame vector to an NED vector
 					u.forwardPoint = CoordinateTranslator.nedToGeodetic(CoordinateTranslator.addBodyFrameVectorToBase(coord,10,0,0,u.data.yaw),refPoint);
-					//System.out.println(u.data.lat + " " + u.data.lng + " " + u.data.height + " " + refPoint.lat + " " +refPoint.lng + " " +refPoint.h );
 				}
 
 				Platform.runLater(() -> u.setLastUpdateTime(System.currentTimeMillis()));
@@ -408,6 +412,7 @@ public class ServerController {
 		}
 	}
 
+	//processes named float mav command 'R'
 	public void updateRCBattery(int battery, int userID){
 		for (User u:users) {
 			if (u.getID() == userID){
@@ -417,24 +422,13 @@ public class ServerController {
 		}
 	}
 
+	//processes msg_attitude
 	public void updateAttitude(msg_attitude msg, int userID) {
-		//System.out.println("Updating height " + relative_alt);
 		for (User u:users) {
 			if (u.getID() == userID){
 				u.data.yaw = msg.yaw;
 				Platform.runLater(() -> u.setLastUpdateTime(System.currentTimeMillis()));
 
-				main.updateUser(u);
-			}
-		}
-	}
-
-
-	public void updateHeight(int relative_alt, int userID) {
-		System.out.println("Updating height " + relative_alt);
-		for (User u:users) {
-			if (u.getID() == userID){
-				u.data.height = relative_alt;
 				main.updateUser(u);
 			}
 		}

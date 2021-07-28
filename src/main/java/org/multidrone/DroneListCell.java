@@ -96,7 +96,7 @@ public class DroneListCell extends ListCell<User> {
     Alert landConfirmation;
 
     @Override
-    protected void updateItem(User user, boolean empty) {
+    protected void updateItem(User user, boolean empty) { //Called whenever the LongProperties in User change
         super.updateItem(user, empty);
 
         if(empty || user == null) {
@@ -105,7 +105,7 @@ public class DroneListCell extends ListCell<User> {
             setGraphic(null);
 
         } else {
-            if (mLLoader == null) {
+            if (mLLoader == null) {//The first setup of the item
 
                 URL resource = getClass().getResource("/org.multidrone/DroneListCell.fxml");
                 if (resource == null) {
@@ -121,7 +121,7 @@ public class DroneListCell extends ListCell<User> {
 
                 try {
                     mLLoader.load();
-                    if (ServerController.getInstance() != null){
+                    if (ServerController.getInstance() != null){ //Setup all the individual drone buttons
                         sc = ServerController.getInstance();
                         btnPlay.setOnAction(e -> {
                             sc.sendMavCommand(user, MAV_CMD.MAV_CMD_DO_PAUSE_CONTINUE, 1, 0);
@@ -154,7 +154,7 @@ public class DroneListCell extends ListCell<User> {
             }
 
 
-
+            //Interpret all the values into strings
             lblBattery.setText(String.valueOf(user.data.batteryPercent) + "%");
             lblRCBat.setText("RC: " + user.data.rcBatteryPercentage + "%");
             lblName.setText(String.valueOf("SYS:" + user.getUserSystemID()));
@@ -181,22 +181,6 @@ public class DroneListCell extends ListCell<User> {
 
             lblGPS.setText(gpsStr);
 
-
-            /*if (Math.abs(user.data.xBOD) < 0.0001f){
-                lblVX.setText("xb:" + 0);
-            } else{
-                lblVX.setText("xb:" + user.data.xBOD);
-            }
-            if (Math.abs(user.data.yBOD) < 0.0001f){
-                lblVY.setText("yb:" + 0);
-            } else{
-                lblVY.setText("yb:" + user.data.yBOD);
-            }
-            if (Math.abs(user.data.zBOD) < 0.0001f){
-                lblVZ.setText("zb:" + 0);
-            } else{
-                lblVZ.setText("zb:" + user.data.zBOD);
-            }*/
             lblVX.setText("vx: " + user.data.vx);
             lblVY.setText("vy: " + user.data.vy);
             lblVZ.setText("vz: " + user.data.vz);
@@ -207,7 +191,7 @@ public class DroneListCell extends ListCell<User> {
 
 
 
-
+            //prevent negative last check time
             if (user.getLastServerCheckTime() < user.getLastUpdateTime()){
                 user.lastServerCheckTimeProperty().set(user.getLastUpdateTime());
             }
@@ -234,6 +218,7 @@ public class DroneListCell extends ListCell<User> {
 
     }
 
+    //This is the function that defines the conditions for each grid cell colour
     private GridCellColour getCellColour(User u, long timeSinceUpdate){
         if (u.getUserMavPort() == 0){
             return GridCellColour.Cyan;

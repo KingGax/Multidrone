@@ -138,6 +138,34 @@ public class Main extends Application {
         mainScene = primaryStage.getScene();
         primaryStage.show();
 
+        //reads in values of items in scene, would be better to have done with fxml
+        setupSceneVariables();
+
+        sc = ServerController.getInstance();
+        sc.fillMain(this);
+
+        //Adds on click listeners, could also be replaced by fxml
+        setupButtons();
+
+        //starts timer for updating timeout values
+        systemDropoutTimeChecker.setCycleCount(Timeline.INDEFINITE);
+        systemDropoutTimeChecker.play();
+
+        //loads in map component and adds it to the scene
+        FXMLLoader mapLoader = new FXMLLoader(getClass().getResource("/download_preplanned_map/main.fxml"));
+        Parent mapRoot = mapLoader.load();
+        mapController = mapLoader.getController();
+        mapController.setParent(this);
+        mapVBox.getChildren().add(mapRoot);
+
+        //makes sure the application closes properly when you press X
+        primaryStage.setOnCloseRequest(t -> {
+            Platform.exit();
+            System.exit(0);
+        });
+    }
+
+    private void setupSceneVariables() {
         ((Label) mainScene.lookup("#usersLabel")).setText("Connected Drones");
         setupConnectedNamesList((ListView<User>) mainScene.lookup("#usersList"));
         selectedHeight = ((Label) mainScene.lookup("#lblHeight"));
@@ -193,15 +221,14 @@ public class Main extends Application {
         btnStartCircling = ((Button) mainScene.lookup("#btnStartCircling"));
         btnSetRadius = ((Button) mainScene.lookup("#btnSetRadius"));
         btnRTL = ((Button) mainScene.lookup("#btnRTL"));
+    }
 
-        sc = ServerController.getInstance();
-        sc.fillMain(this);
-
+    private void setupButtons() {
         setupArmButton(armAll,true);
         setupArmButton(disarmAll,false);
         setupLaunchAllButton();
         setupFocusMapButton();
-        setupStartControllerButton();
+        setupGOTOButton();
         setupSetTargetPosButton(btnSetD0Targ,0);
         setupSetTargetPosButton(btnSetD1Targ,1);
         setupSetTargetPosButton(btnSetD2Targ,2);
@@ -217,43 +244,15 @@ public class Main extends Application {
         setupDemoOut();
         setupDemoCircle();
         setupStepCircle();
-
-
         setupLandAll();
         setupInitialTargetsButton();
-        //addJoystickCommandToButton(backwards,(short)-870,(short)0,(short)0,(short)0);
-        //addJoystickCommandToButton(forward,(short)870,(short)0,(short)0,(short)0);
-
         goHomeConfirmation = new Alert(Alert.AlertType.CONFIRMATION,"Are you sure you want all the drones to return home?");
         setupHomeButton();
 
         setupSetRefPosButton();
-
-        systemDropoutTimeChecker.setCycleCount(Timeline.INDEFINITE);
-        systemDropoutTimeChecker.play();
-
-        FXMLLoader mapLoader = new FXMLLoader(getClass().getResource("/download_preplanned_map/main.fxml"));
-        Parent mapRoot = mapLoader.load();
-        mapController = mapLoader.getController();
-        mapController.setParent(this);
-        mapVBox.getChildren().add(mapRoot);
-
-        GeodeticCoordinate gd = new GeodeticCoordinate(60.0409446f,10.04911552f,4.3f);
-        GlobalRefrencePoint pt = new GlobalRefrencePoint(60.04094016,10.04911,0);
-        System.out.println(gd);
-        NEDCoordinate nc = CoordinateTranslator.GeodeticToNED(gd,pt);
-        System.out.println(nc.x + " " + nc.y + " " + nc.z);
-        GeodeticCoordinate gdtrans = CoordinateTranslator.nedToGeodetic(nc,pt);
-        System.out.println(gdtrans);
-
-        //addTestData();
-
-        primaryStage.setOnCloseRequest(t -> {
-            Platform.exit();
-            System.exit(0);
-        });
     }
 
+    //Rotates target circle positions
     private void setupStepCircle() {
         btnStepCircle.setOnAction(e -> {
             sc.stepCircle();
@@ -262,6 +261,7 @@ public class Main extends Application {
     }
 
 
+    //Hard coded demo values
     int[] droneOrder = {0,1,2,3};
     float[] goOutLats = {
             51.423225f,
@@ -269,20 +269,13 @@ public class Main extends Application {
             51.423172f,
             51.423192f
     };
-
-
     float[] goOutLongs = {
             -2.671130f,
             -2.671279f,
             -2.6714041f,
             -2.671548f
     };
-
-
-
-
     float goOutHeight = 20;
-
     GeodeticCoordinate refCirclePos = new GeodeticCoordinate(51.423164f, -2.6713874f, 2);
     float demoVerticalCircleOffset = 18f;
     float demoStartRadius = 15f;
@@ -319,6 +312,7 @@ public class Main extends Application {
         });
     }
 
+    //rearranges the drones to allow for them to move directly forwards, currently hardcoded to work with up to 4 drones
     private void setupSetDroneOrder() {
         btnSetDroneOrder.setOnAction(e -> {
             if (txtSetDroneOrder.getText() != "") {
@@ -390,37 +384,10 @@ public class Main extends Application {
         });
     }
 
-    long lat = 0;
     void setLastSystemCheckForUsers(){
         for (User u: connectedNamesList.getItems()) {
             u.setLastServerCheckTime(System.currentTimeMillis());
-            /*if (u.getID() == 0){
-                sc.setRefPoint(new GlobalRefrencePoint(51.42347,-2.6713595,0));
-                msg_global_position_int msg = new msg_global_position_int();
-                msg.lat = (int)(51.42347 *Math.pow(10,7));
-                msg.lon = (int)(-2.6713595*Math.pow(10,7));
-                msg_attitude msgat = new msg_attitude();
-                msgat.yaw = (float) Math.toRadians(lat);
-                sc.updateAttitude(msgat,0);
-                sc.receivePosInt(msg,0);
-
-            }
-            if (u.getID() == 1){
-                msg_global_position_int msg = new msg_global_position_int();
-                msg.lat = (int)(51.42447 *Math.pow(10,7));
-                msg.lon = (int)(-2.6723595*Math.pow(10,7));
-                msg_attitude msgat = new msg_attitude();
-                msgat.yaw = (float) Math.toRadians(lat);
-                sc.updateAttitude(msgat,1);
-                sc.receivePosInt(msg,1);
-
-            }*/
         }
-
-        if (lat < 60){
-            lat++;
-        }
-
     }
 
     void setupStartCircling(){
@@ -538,7 +505,6 @@ public class Main extends Application {
                                 moveTarget(clickedLat,clickedLng,id);
                                 u.target = new GeodeticCoordinate(clickedLat,clickedLng,alt);
                                 u.targetYaw = u.data.yaw;
-                                //mapEngine.executeScript("document.hideSelectedPointMarker()");
                                 if (mapController.isLoaded()){
                                     mapController.hideClickedPoint();
                                 }
@@ -612,6 +578,7 @@ public class Main extends Application {
         focusMapButton.setOnAction(e -> focusMapOnDrones());
     }
 
+    //add in main if you want to test without drones, useful function
     void addTestData(){
         User u1 = new User("u1", null, 50);
         u1.data = new UserDroneData();
@@ -641,8 +608,6 @@ public class Main extends Application {
         connectedNamesList.getItems().add(u2);
         connectedNamesList.getItems().add(u3);
         //connectedNamesList.getItems().add(u4);
-
-
     }
 
     public void setSelectedCoordinate(float lat, float lng){
@@ -653,14 +618,6 @@ public class Main extends Application {
 
     void setupConnectedNamesList(ListView<User> usersList){
 
-        /*usersList.setCellFactory(lv -> new ListCell<User>() {
-            @Override
-            protected void updateItem(User item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? "" : item.getUsername());
-            }
-        });*/
-
         usersList.setCellFactory(new Callback<ListView<User>, ListCell<User>>() {
             @Override
             public ListCell<User> call(ListView<User> studentListView) {
@@ -669,6 +626,7 @@ public class Main extends Application {
         });
 
 
+        //handle double clicking drones
         usersList.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
@@ -685,6 +643,7 @@ public class Main extends Application {
         selectedUserID = user.getID();
     }
 
+    //Used to show double clicked user
     private void displaySelectedUser(User user){
         selectedName.setText("Selected Name: " + user.getUsername());
         selectedHeight.setText("Height: " + user.data.height);
@@ -696,29 +655,20 @@ public class Main extends Application {
 
     private void onUserClick(User user){
         highlightUser(user);
-        //sc.sendData(user, "henlo");
-        //sc.sendMavCommand(user,MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM,1);
     }
 
+    //function called from server controller to refresh displayed user
     public void updateUser(User u){
         Platform.runLater(() -> {
             if (selectedUserID == u.getID()){
                 displaySelectedUser(u);
             }
-            /*for (User u: connectedNamesList.getItems()) {
-                if (selectedUserID == u.getID()){
-
-                }
-            }*/
         });
 
     }
 
     public void moveMarker(float lat, float lng, int id){
         Platform.runLater(() -> {
-            /*if (mapLoaded){
-                mapEngine.executeScript("document.moveMarker("+lat+","+lng+","+id+")");
-            }*/
             if (mapController.isLoaded()){
                 mapController.moveMarker(id,lat,lng);
             }
@@ -727,12 +677,6 @@ public class Main extends Application {
 
     public void moveMarker(User u){
         Platform.runLater(() -> {
-            /*if (mapLoaded){
-                mapEngine.executeScript("document.moveMarker("+u.data.lat+","+u.data.lng+","+u.getID()+")");
-                if (u.forwardPoint != null){
-                    mapEngine.executeScript("document.moveSightMarker("+u.forwardPoint.lat+","+u.forwardPoint.lng+","+u.getID()+")");
-                }
-            }*/
             if (mapController.isLoaded()){
                 mapController.moveMarker(u.getID(),u.data.lat,u.data.lng);
                 if (u.forwardPoint != null){
@@ -744,9 +688,6 @@ public class Main extends Application {
 
     public void moveTarget(float lat, float lng, int id){
         Platform.runLater(() -> {
-            /*if (mapLoaded){
-                mapEngine.executeScript("document.moveTarget("+lat+","+lng+","+id+")");
-            }*/
             if (mapController.isLoaded()){
                 mapController.moveTarget(id,lat,lng);
             }
@@ -763,52 +704,8 @@ public class Main extends Application {
     }
 
     private void focusMapOnDrones(){
-        /*float tmpLat = 0;
-        float tmpLng = 0;
-        final float zoomToLatSpreadRatio = 12f;
-        int numUsers = connectedNamesList.getItems().size();
-        float highestLat=Float.MIN_VALUE, lowestLat=Float.MAX_VALUE, highestLng=Float.MIN_VALUE, lowestLng=Float.MAX_VALUE;
-        if (numUsers == 0){
-            numUsers = 1;
-        }
-        for (User u: connectedNamesList.getItems()) {
-            tmpLat += u.data.lat;
-            tmpLng += u.data.lng;
-            if (highestLat < u.data.lat){
-                highestLat = u.data.lat;
-            }
-            if (lowestLat > u.data.lat){
-                lowestLat = u.data.lat;
-            }
-            if (highestLng < u.data.lng){
-                highestLng = u.data.lng;
-            }
-            if (lowestLng > u.data.lng){
-                lowestLng = u.data.lng;
-            }
-        }
-        final float avgLat = tmpLat / numUsers;
-        final float avgLng = tmpLng / numUsers;
-        final float latSpread = highestLat - lowestLat;
-        final float lngSpread = highestLng - lowestLng;
-        final float maxSpread = Math.max(latSpread,lngSpread);
-        final float zoomLevel = Math.max(0,20 - maxSpread*zoomToLatSpreadRatio);*/
-
-
-
         System.out.println("fitting all markers");
-
-        /*Platform.runLater(() -> {
-            User u1 = connectedNamesList.getItems().get(0);
-            moveMarker(u1.data.lat,u1.data.lng,3);
-            User u2 = connectedNamesList.getItems().get(1);
-            moveMarker(u2.data.lat,u2.data.lng,4);
-        });*/
-
         Platform.runLater(() -> {
-            /*if (mapLoaded){
-                mapEngine.executeScript("document.focusOnMarkers()");
-            }*/
             if (mapController.isLoaded()){
                 mapController.focusDrones();
             }
@@ -816,12 +713,11 @@ public class Main extends Application {
     }
 
 
-    private void setupStartControllerButton(){
-        //btnStartController.setOnAction(e -> sc.setSwarmControllerActive(true));
+    private void setupGOTOButton(){
         btnStartController.setOnAction(e -> {
                 for (User u : connectedNamesList.getItems()) {
                     if (u.target != null){
-                        sc.testSendUserTarget(u);
+                        sc.sendUserTarget(u);
                     }
 
                 }
@@ -839,6 +735,7 @@ public class Main extends Application {
         });
     }
 
+    //function for setting up arm and disarm buttons
     private void setupArmButton(Button b, boolean arm){
         float armParam = arm ? 1 : 0;
         b.setOnAction(new EventHandler<ActionEvent>() {
@@ -858,37 +755,24 @@ public class Main extends Application {
     }
 
     private void setupLaunchAllButton(){
-        launchAll.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (User u:connectedNamesList.getItems()) {
-                            if (u.getUserMavPort() != 0){
-                                sc.sendMavCommand(u,MAV_CMD.MAV_CMD_NAV_TAKEOFF,0,6);
-                                u.preLandPoint = new GeodeticCoordinate(u.data.lat,u.data.lng,8);
-                            }
-                        }
-                        System.out.println("Arm all");
+        launchAll.setOnAction(e -> {
+            //Launch button sends takeoff command and stores location of all drones for returning to land
+            Platform.runLater(() -> {
+                for (User u:connectedNamesList.getItems()) {
+                    if (u.getUserMavPort() != 0){
+                        sc.sendMavCommand(u,MAV_CMD.MAV_CMD_NAV_TAKEOFF,0,6);
+                        u.preLandPoint = new GeodeticCoordinate(u.data.lat,u.data.lng,8);
                     }
-                });
+                }
+                System.out.println("Arm all");
+            });
 
-            }
         });
 
     }
 
     public void setConnectedNamesList(ObservableList<User> users){
         connectedNamesList.setItems(users);
-    }
-
-    public void addUser(User newUser){
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                //connectedNamesList.getItems().add(newUser);
-            }
-        });
     }
 
 

@@ -494,35 +494,6 @@ public class DownloadPreplannedMapController {
 
   private void moveMarker(int id, Point graphicPoint) {
     droneMarkers.get(id).setGeometry(graphicPoint);
-
-    /*if (sym == null){
-      Image newImage = new Image("download_preplanned_map/mapres/drones/greenptr.png");
-      PictureMarkerSymbol markerSymbol = new PictureMarkerSymbol(newImage);
-
-      // set size of the image
-      markerSymbol.setHeight(20);
-      markerSymbol.setWidth(30);
-
-      // load symbol asynchronously
-      markerSymbol.loadAsync();
-
-      // add to the graphic overlay once done loading
-      PictureMarkerSymbol finalMarkerSymbol = markerSymbol;
-      markerSymbol.addDoneLoadingListener(() -> {
-        if (finalMarkerSymbol.getLoadStatus() == LoadStatus.LOADED) {
-          //Graphic symbolGraphic =
-          sym = new Graphic(graphicPoint, finalMarkerSymbol);
-          markers.getGraphics().add(sym);
-        } else {
-          Alert alert = new Alert(Alert.AlertType.ERROR, "Picture Marker Symbol Failed to Load!");
-          alert.show();
-        }
-      });
-    } else{
-      sym.setGeometry(graphicPoint);
-    }*/
-
-
   }
 
   void initialiseDroneMarkers(){

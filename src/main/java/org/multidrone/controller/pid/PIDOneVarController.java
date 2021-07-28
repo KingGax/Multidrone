@@ -1,4 +1,4 @@
-package org.multidrone.controller;
+package org.multidrone.controller.pid;
 
 public abstract class PIDOneVarController {
     public float lastError;

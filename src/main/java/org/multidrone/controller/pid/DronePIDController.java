@@ -1,4 +1,4 @@
-package org.multidrone.controller;
+package org.multidrone.controller.pid;
 
 import org.multidrone.coordinates.*;
 

@@ -53,6 +53,7 @@ public class DataListener implements Runnable {
         this.myID = myID;
     }
 
+    //Mavlink decoder for mavlink 1 packets
     private MAVLinkPacket decodePacket(byte[] buffer, int payloadSize) {
         MAVLinkPacket pack = new MAVLinkPacket(payloadSize);
         pack.seq = Byte.toUnsignedInt(buffer[2]);
@@ -84,9 +85,7 @@ public class DataListener implements Runnable {
 
             byte[] buffer = new byte[1500]; // MTU = 1500 bytes
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            //System.out.println("Waiting on port " + getMyPort() + " id: " + getMyID());
-            socket.receive(packet);
-            //System.out.println("Received data");
+            socket.receive(packet); //Wait to receive packet
             int recvSize = packet.getLength();
             byte[] myObject = new byte[recvSize];
 
@@ -94,24 +93,20 @@ public class DataListener implements Runnable {
                 myObject[i] = buffer[i];
             }
 
-            try {
+            try { //Attempt to decode mav packet
                 int payloadSize = buffer[1];
                 currentPack = decodePacket(buffer, payloadSize);
 
-                //ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(myObject));
-                //MAVLinkPacket data = (MAVLinkPacket) iStream.readObject();
-                //iStream.close();
                 if (currentPack != null) {
                     this.handleMavMessage(currentPack);
                 } else {
                     System.out.println("Mav packet parsing failed");
                 }
 
-            } catch (Exception e) {
+            } catch (Exception e) { //If it fails to translate mav packet data it will see if it can decode user data
                 e.printStackTrace();
                 System.out.println("Mav packet deserialisation failed");
                 try {
-
                     ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(myObject));
                     UserDroneData data = (UserDroneData) iStream.readObject();
                     iStream.close();
@@ -129,7 +124,7 @@ public class DataListener implements Runnable {
         controller.handleData(data);
     }
 
-    private void handleMavMessage(MAVLinkPacket packet) throws Exception {
+    private void handleMavMessage(MAVLinkPacket packet) {
         ServerController controller = ServerController.getInstance();
         MAVLinkMessage message = packet.unpack();
 
@@ -172,15 +167,15 @@ public class DataListener implements Runnable {
             case msg_gps_raw_int.MAVLINK_MSG_ID_GPS_RAW_INT:
                 msg_gps_raw_int gpsMsg = (msg_gps_raw_int)message;
                 controller.updateGPSStrength(gpsMsg.fix_type,myID);
-                        break;
+                break;
             default:
                 break;
 
         }
 
-
     }
 
+    //interpreting MAV_RESULTS as strings. Look at MAV_RESULT class to see their definitions
     private String resultToString(short result) {
         switch (result) {
             case MAV_RESULT.MAV_RESULT_ACCEPTED:

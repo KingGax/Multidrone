@@ -1,6 +1,9 @@
 package org.multidrone.controller;
 
 import javafx.collections.ObservableList;
+import org.multidrone.controller.pid.DronePIDController;
+import org.multidrone.controller.pid.PIDControllerX;
+import org.multidrone.controller.pid.PIDControllerY;
 import org.multidrone.coordinates.CoordinateTranslator;
 import org.multidrone.coordinates.GeodeticCoordinate;
 import org.multidrone.coordinates.GlobalRefrencePoint;
@@ -19,19 +22,6 @@ public class MultiDronePositionController implements Runnable {
     private boolean active = false;
 
     private GlobalRefrencePoint globalRef;
-    private NEDCoordinate targetCoord;
-
-    private PIDControllerX xController = new PIDControllerX();
-    private float xWP = 20;
-    private float xWI = 1;
-    private float xWD = 8_000_000;
-    private float xIntegralWipeDist = 10;
-
-    private PIDControllerY yController = new PIDControllerY();
-    private float yWP = 20;
-    private float yWI = 1;
-    private float yWD = 8_000_000;
-    private float yIntegralWipeDist = 10;
 
     private float MIN_SAFETY_DIST = 10;
     private float timeSinceEmergencySend = 0;
@@ -65,10 +55,6 @@ public class MultiDronePositionController implements Runnable {
         rotationTime = millis;
     }
 
-    public void UpdateUser(User u){
-
-    }
-
     public void stepCircle(){
         rotationTimer += rotationTime / (droneNumber * 2);
     }
@@ -90,14 +76,10 @@ public class MultiDronePositionController implements Runnable {
         }
     }
 
+    //Filming target is assumed to be the point of interest
     public void setGlobalRef(GlobalRefrencePoint ref){
         globalRef = ref;
-        GeodeticCoordinate target = new GeodeticCoordinate((float)ref.lat +0.002f,(float)ref.lng+0.002f,(float)ref.h+10);
-        targetCoord = CoordinateTranslator.GeodeticToNED(target,ref);
         targetPos = new NEDCoordinate(0,0,0);
-        droneController.setGlobalRef(ref);
-        droneController.setTargetCoord(targetCoord);
-        System.out.println("TARGET " + targetCoord.x + " " + targetCoord.y + " " + targetCoord.z);
     }
 
     public void setUserList(ObservableList<User> users){
@@ -110,7 +92,6 @@ public class MultiDronePositionController implements Runnable {
     }
 
     private void initialize() throws Exception {
-        DatagramSocket socket = new DatagramSocket();
         sleepTime = Math.round(1000/refreshRateHz);
         droneController.initialise();
 
@@ -123,8 +104,9 @@ public class MultiDronePositionController implements Runnable {
         }
     }
 
+    //The main loop of the program!
     private void droneControlLoop(List<User> users){
-        //safetyCheck(users);
+        safetyCheck(users);
         if (targetPos != null && radius > MIN_RADIUS){
             double rotationSteps = 2 * Math.PI / droneNumber;
             for (int i = 0; i < droneNumber; i++) {
@@ -132,7 +114,7 @@ public class MultiDronePositionController implements Runnable {
                 double targetY = targetPos.y + radius * Math.sin(rotationSteps * i + (rotationTimer/rotationTime)*Math.PI*2);
                 double targetZ = targetPos.z - heightOffset;
                 GeodeticCoordinate targGD = CoordinateTranslator.nedToGeodetic(new NEDCoordinate(targetX,targetY,targetZ),globalRef);
-                if (setInitialTargets || circlingEnabled){
+                if (setInitialTargets || circlingEnabled){ //This sets the targets of all users to help them get into formation
                     ServerController.getInstance().setTargetMarker(targGD,i);
                     if (currentUsers.size() > i){
                         User u = currentUsers.get(i);
@@ -156,6 +138,7 @@ public class MultiDronePositionController implements Runnable {
 
     }
 
+    //Calculate yaw required to look at a point in NED space
     private float getTargetYaw(double x, double y, double targX, double targY){
 
         double yaw = Math.atan2((targX - x),(targY - y)) - Math.PI/2;
@@ -163,17 +146,9 @@ public class MultiDronePositionController implements Runnable {
             yaw += Math.PI * 2;
         }
         return (float)-yaw;
-
-
-        /*double northOffset = 2;
-        double northX = x+northOffset;
-        double northToTargDist = Math.sqrt(Math.pow(northX-targX,2) + Math.pow(y - targY,2));
-        double posToTargDist = Math.sqrt(Math.pow(x-targX,2) + Math.pow(y-targY,2));
-        double a2b2c2 = Math.pow(northToTargDist,2) - Math.pow(northOffset,2) - Math.pow(posToTargDist,2);
-        double yaw = Math.acos((a2b2c2)/(-2 * posToTargDist * northOffset));
-        return (float) -yaw;*/
     }
 
+    //Currently projects to the point the drone will be at in the future and compares it to all other drones, could upgrade to compare similar points across the projected lines
     private void safetyCheck(List<User> users){
         if (globalRef != null){
             calculateProjectedPos(users,projectionLengthSeconds);
@@ -211,7 +186,6 @@ public class MultiDronePositionController implements Runnable {
                 u.currentPos = CoordinateTranslator.GeodeticToNED(new GeodeticCoordinate(u.data.lat,u.data.lng,u.data.height), globalRef);
             }
             u.projectedPos = new NEDCoordinate(u.currentPos.x + (u.data.vx * projectTimeSeconds) / 100, u.currentPos.y + (u.data.vy * projectTimeSeconds) / 100, u.currentPos.z + (u.data.vz * projectTimeSeconds) / 100);
-            // CoordinateTranslator.addBodyFrameVectorToBase(u.currentPos,(u.data.vx*projectTimeSeconds)/100,(u.data.vy*projectTimeSeconds)/100,(u.data.vz*projectTimeSeconds)/100,u.data.yaw);
         }
     }
 
