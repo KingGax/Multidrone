@@ -39,6 +39,20 @@
                 </fills>
             </Background>
         </background>
+      <HBox prefHeight="100.0" prefWidth="200.0">
+         <children>
+            <Button fx:id="btnGoMapPoint" mnemonicParsing="false" onAction="#goMapPointButtonEvent" text="GO" />
+            <TextField fx:id="txtLatLng" promptText="lat,lng" />
+         </children>
+         <padding>
+            <Insets top="20.0" />
+         </padding>
+      </HBox>
+        <Button fx:id="btnLoadRecent" mnemonicParsing="false" prefHeight="26.0" prefWidth="199.0" text="Load Recent" />
+        <Button fx:id="btnDownloadScreen" mnemonicParsing="false" prefHeight="12.0" prefWidth="200.0" text="Download Screen" />
+      <ProgressBar fx:id="progressBar" minHeight="10.0" prefHeight="12.0" prefWidth="200.0" progress="0.0" />
+      <Button fx:id="btnOnlineMap" mnemonicParsing="false" prefHeight="25.0" prefWidth="200.0" text="Load Online Map" />
+        <Button fx:id="btnLoad" minWidth="200" onAction="#loadMapButtonEvent" text="Load New File" />
         <Label text="Preplanned Map Areas:">
          <VBox.margin>
             <Insets />
@@ -50,11 +64,6 @@
         <Button fx:id="downloadButton" minWidth="200" onAction="#handleDownloadPreplannedAreaButtonClicked" text="Download" />
         <Label text="Downloads (deleted on exit):" />
         <ListView fx:id="downloadJobsListView" maxHeight="100" maxWidth="200" minHeight="100" />
-        <Button fx:id="btnLoadRecent" mnemonicParsing="false" prefHeight="26.0" prefWidth="199.0" text="Load Recent" />
-        <Button fx:id="btnDownloadScreen" mnemonicParsing="false" prefHeight="12.0" prefWidth="200.0" text="Download Screen" />
-      <ProgressBar fx:id="progressBar" minHeight="10.0" prefHeight="12.0" prefWidth="200.0" progress="0.0" />
-      <Button fx:id="btnOnlineMap" mnemonicParsing="false" prefHeight="25.0" prefWidth="200.0" text="Load Online Map" />
-        <Button fx:id="btnLoad" minWidth="200" onAction="#loadMapButtonEvent" text="Load New File" />
     </VBox>
    <Button fx:id="btnToggleSettings" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#toggleSettings" text="⚙" StackPane.alignment="TOP_LEFT" />
 </StackPane>

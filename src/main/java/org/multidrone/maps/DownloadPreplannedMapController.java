@@ -44,10 +44,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ProgressBar;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -80,6 +77,7 @@ public class DownloadPreplannedMapController {
   @FXML private Button btnLoadRecent;
   @FXML private Button btnToggleSettings;
   @FXML private VBox settingsVBox;
+  @FXML private TextField txtLatLng;
   private GraphicsOverlay markers = new GraphicsOverlay();
 
   private boolean settingsHidden = false;
@@ -448,8 +446,6 @@ public class DownloadPreplannedMapController {
       lng = Double.parseDouble(split[1].substring(0,split[1].length()-1));
       if (split[1].charAt(split[1].length()-1) == 'W'){
         lng *= -1;
-      }  else{
-        System.out.println(split[1].charAt(split[1].length()-1));
       }
     } catch (Exception e){
        System.out.println("latLngStr parse failed");
@@ -465,8 +461,6 @@ public class DownloadPreplannedMapController {
 
   public void moveMarker(int id, double lat, double lng) {
     Point p = latLngToPoint(lat,lng);
-    Point2D markerPos = mapView.locationToScreen(p);
-    System.out.println(markerPos);
     droneMarkers.get(id).setGeometry(p);
   }
 
@@ -537,8 +531,6 @@ public class DownloadPreplannedMapController {
       droneMarkers.add(new Graphic());
     }
     for (DroneColour dc : DroneColour.values()){
-      System.out.println(dc.id);
-      System.out.println(dc.filePath);
       Image newImage = new Image(dc.filePath);
       PictureMarkerSymbol markerSymbol = new PictureMarkerSymbol(newImage);
 
@@ -570,8 +562,6 @@ public class DownloadPreplannedMapController {
       targetMarkers.add(new Graphic());
     }
     for (DroneColour dc : DroneColour.values()){
-      System.out.println(dc.id);
-      System.out.println(dc.targetFilePath);
       Image newImage = new Image(dc.targetFilePath);
       PictureMarkerSymbol markerSymbol = new PictureMarkerSymbol(newImage);
 
@@ -703,5 +693,24 @@ public class DownloadPreplannedMapController {
   public void toggleSettings(ActionEvent actionEvent) {
       settingsVBox.setVisible(settingsHidden);
       settingsHidden = !settingsHidden;
+  }
+
+  public void goMapPointButtonEvent(ActionEvent actionEvent) {
+    String text = txtLatLng.getText();
+    if(text != ""){
+      try {
+        String[] latLngStr = text.replaceAll("\\s","").split(",");
+        double lat = Double.parseDouble(latLngStr[0]);
+        double lng = Double.parseDouble(latLngStr[1]);
+        Point p = latLngToPoint(lat,lng);
+        if (mapView.getMap() != null){
+          mapView.setViewpointCenterAsync(p,10000);
+        }
+      } catch (Exception e){
+        new Alert(Alert.AlertType.ERROR, "lat,lng string invalid").show();
+      }
+    } else {
+      new Alert(Alert.AlertType.ERROR, "Please enter lat,long").show();
+    }
   }
 }
