@@ -20,6 +20,7 @@ import com.MAVLink.common.msg_command_long;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.image.Image;
 import org.multidrone.Main;
 import org.multidrone.controller.MultiDronePositionController;
 import org.multidrone.coordinates.*;
@@ -420,6 +421,10 @@ public class ServerController {
 				main.updateUser(u);
 			}
 		}
+	}
+
+	public void setImage(int id,Image image){
+		main.setImage(id,image);
 	}
 
 	//processes msg_attitude

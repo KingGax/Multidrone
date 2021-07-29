@@ -351,6 +351,10 @@ public class DownloadPreplannedMapController {
     mapView.setViewpointGeometryAsync(g);
   }
 
+  public void dispose(){
+    mapView.dispose();
+  }
+
   private void initialiseSightMarkers() {
     for (DroneColour dc : DroneColour.values()) {
       sightMarkers.add(new Graphic());

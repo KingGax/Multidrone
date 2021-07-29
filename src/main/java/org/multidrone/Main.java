@@ -11,6 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -27,10 +28,16 @@ import org.multidrone.maps.DownloadPreplannedMapController;
 import org.multidrone.server.ServerController;
 import org.multidrone.server.User;
 
+import org.bytedeco.javacv.AndroidFrameConverter;
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.Frame;
+import org.bytedeco.javacv.FrameGrabber;
+
 import com.MAVLink.enums.MAV_CMD;
 import org.multidrone.sharedclasses.UserDroneData;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 
@@ -127,8 +134,13 @@ public class Main extends Application {
 
         //addUser(new User("dave",null,0));
 
-
-
+        /*byte[] b = {1,2,3,4,5};
+        FFmpegFrameGrabber g = new FFmpegFrameGrabber(new ByteArrayInputStream(b));
+        try {
+            g.start();
+        } catch (Exception e){
+            e.printStackTrace();
+        }*/
 
         Text listViewTitle = new Text("Connected Drones");
         //VBox mainVbox = new VBox(listViewTitle,connectedNamesList);
@@ -160,6 +172,7 @@ public class Main extends Application {
 
         //makes sure the application closes properly when you press X
         primaryStage.setOnCloseRequest(t -> {
+            mapController.dispose();
             Platform.exit();
             System.exit(0);
         });
@@ -310,6 +323,13 @@ public class Main extends Application {
                 }
             }
         });
+    }
+
+    public void setImage(int id, Image image){
+        Platform.runLater(()->{
+            imgSelected.setImage(image);
+        });
+
     }
 
     //rearranges the drones to allow for them to move directly forwards, currently hardcoded to work with up to 4 drones
