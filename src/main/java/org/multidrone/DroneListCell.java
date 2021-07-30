@@ -10,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import org.multidrone.Main;
 import org.multidrone.enums.GridCellColour;
+import org.multidrone.maps.DroneColour;
 import org.multidrone.server.ServerController;
 import org.multidrone.server.User;
 
@@ -95,6 +96,8 @@ public class DroneListCell extends ListCell<User> {
     Alert goHomeConfirmation;
     Alert landConfirmation;
 
+    String colourString = "";
+
     @Override
     protected void updateItem(User user, boolean empty) { //Called whenever the LongProperties in User change
         super.updateItem(user, empty);
@@ -152,13 +155,16 @@ public class DroneListCell extends ListCell<User> {
                 }
 
             }
+            if (colourString == ""){
+                colourString = DroneColour.valueOfID(user.getID()).colourStr;
+            }
 
 
             //Interpret all the values into strings
             lblBattery.setText(String.valueOf(user.data.batteryPercent) + "%");
             lblRCBat.setText("RC: " + user.data.rcBatteryPercentage + "%");
             lblName.setText(String.valueOf("SYS:" + user.getUserSystemID()));
-            lblID.setText(String.valueOf("ID:" + user.getID()));
+            lblID.setText(colourString);
             lblYaw.setText("Yaw: " + decimalFormatter.format(Math.toDegrees(user.data.yaw)));
             lblHeight.setText("Height: " + user.data.height + "m");
 

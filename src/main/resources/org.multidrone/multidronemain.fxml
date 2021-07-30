@@ -83,7 +83,7 @@
       </HBox>
       <GridPane alignment="center" hgap="10" prefHeight="900.0" prefWidth="1600.0" vgap="10">
          <columnConstraints>
-            <ColumnConstraints maxWidth="600.0" minWidth="205.0" prefWidth="600.0" />
+            <ColumnConstraints maxWidth="700.0" minWidth="205.0" prefWidth="600.0" />
             <ColumnConstraints maxWidth="900.0" minWidth="129.0" prefWidth="9000.0" />
          </columnConstraints>
          <rowConstraints>
@@ -101,23 +101,17 @@
                   </VBox>
                   <StackPane id="mapPane" prefHeight="500.0" prefWidth="870.0">
                      <children>
-                        <VBox prefHeight="200.0" prefWidth="100.0">
-                           <children>
-                              <Label text="green red blue yellow" />
-                              <Button id="btnSetDroneOrder" mnemonicParsing="false" text="demo set drone order" />
-                              <TextField id="txtSetDroneOrder" prefHeight="26.0" prefWidth="222.0" promptText="set order" />
-                              <Button id="btnDemoOut" mnemonicParsing="false" text="demo out" />
-                              <Button id="btnDemoCircle" mnemonicParsing="false" text="set demo circle" />
-                              <Button id="btnStepCircle" mnemonicParsing="false" text="Step circle">
-                                 <VBox.margin>
-                                    <Insets top="80.0" />
-                                 </VBox.margin>
-                              </Button>
-                           </children>
-                           <padding>
-                              <Insets top="40.0" />
-                           </padding>
-                        </VBox>
+                        <GridPane id="gridPaneImages" fx:id="gridPaneImages">
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
+                        </GridPane>
                      </children></StackPane>
                </children>
                <GridPane.margin>
@@ -127,41 +121,62 @@
                   <Insets />
                </opaqueInsets>
             </VBox>
-            <HBox maxWidth="-Infinity" prefHeight="100.0" prefWidth="200.0">
+            <HBox maxWidth="-Infinity" prefHeight="446.0" prefWidth="606.0">
                <GridPane.margin>
                   <Insets />
                </GridPane.margin>
                <children>
                   <Button id="btnToggleMap" minWidth="30.0" mnemonicParsing="false" text="MAP" />
-                  <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="324.0" prefWidth="271.0">
+                  <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="446.0" prefWidth="514.0">
                      <children>
-                        <AnchorPane id="selectedPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="262.0" prefWidth="500.0">
-                           <VBox layoutX="10.0" layoutY="10.0" prefHeight="251.0" prefWidth="280.0">
-                              <children>
-                                 <Label id="lblSelectedName" text="Viewing: No one" />
-                                 <Label id="lblVideo" text="Video Feed" />
-                                 <ImageView id="imgSelected" fx:id="imgSelected" fitHeight="250.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true" />
-                                 <HBox prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                        <HBox prefHeight="446.0" prefWidth="539.0">
+                           <children>
+                              <AnchorPane id="selectedPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="446.0" prefWidth="386.0">
+                                 <VBox layoutX="10.0" layoutY="10.0" prefHeight="339.0" prefWidth="371.0">
                                     <children>
-                                       <Label id="lblBattery" text="Battery: xx" />
-                                       <Label id="lblHeight" text="Height: xx" />
-                                       <Label id="lblAlt" text="Alt: xxx " />
+                                       <Label id="lblSelectedName" text="Viewing: No one" />
+                                       <Label id="lblVideo" text="Video Feed" />
+                                       <ImageView id="imgSelected" fx:id="imgSelected" fitHeight="250.0" fitWidth="371.0" pickOnBounds="true" preserveRatio="true" />
+                                       <HBox prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                          <children>
+                                             <Label id="lblBattery" text="Battery: xx" />
+                                             <Label id="lblHeight" text="Height: xx" />
+                                             <Label id="lblAlt" text="Alt: xxx " />
+                                          </children>
+                                       </HBox>
+                                       <HBox layoutX="10.0" layoutY="194.0" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                          <children>
+                                             <Label id="lblLat" text="Lat: xxxxxxxxxxx" />
+                                             <Label id="lblLong" text="Long: xxxxxxxxxxxx" />
+                                          </children>
+                                       </HBox>
+                                       <HBox layoutX="10.0" layoutY="228.0" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                          <children>
+                                             <Label id="lblYaw" text="Yaw: xxxxxxx" />
+                                          </children>
+                                       </HBox>
                                     </children>
-                                 </HBox>
-                                 <HBox layoutX="10.0" layoutY="194.0" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
-                                    <children>
-                                       <Label id="lblLat" text="Lat: xxxxxxxxxxx" />
-                                       <Label id="lblLong" text="Long: xxxxxxxxxxxx" />
-                                    </children>
-                                 </HBox>
-                                 <HBox layoutX="10.0" layoutY="228.0" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
-                                    <children>
-                                       <Label id="lblYaw" text="Yaw: xxxxxxx" />
-                                    </children>
-                                 </HBox>
-                              </children>
-                           </VBox>
-                        </AnchorPane>
+                                 </VBox>
+                              </AnchorPane>
+                              <VBox prefHeight="446.0" prefWidth="135.0">
+                                 <children>
+                                    <Label text="green red blue yellow" />
+                                    <Button id="btnSetDroneOrder" mnemonicParsing="false" text="demo set drone order" />
+                                    <TextField id="txtSetDroneOrder" prefHeight="26.0" prefWidth="222.0" promptText="set order" />
+                                    <Button id="btnDemoOut" mnemonicParsing="false" text="demo out" />
+                                    <Button id="btnDemoCircle" mnemonicParsing="false" text="set demo circle" />
+                                    <Button id="btnStepCircle" mnemonicParsing="false" text="Step circle">
+                                       <VBox.margin>
+                                          <Insets top="80.0" />
+                                       </VBox.margin>
+                                    </Button>
+                                 </children>
+                                 <padding>
+                                    <Insets top="40.0" />
+                                 </padding>
+                              </VBox>
+                           </children>
+                        </HBox>
                         <WebView id="mapView" fx:id="mapView" prefHeight="100.0" prefWidth="292.0" visible="false" />
                      </children>
                   </StackPane>

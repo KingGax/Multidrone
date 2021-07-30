@@ -36,8 +36,6 @@ dependencies {
     natives "com.esri.arcgisruntime:arcgis-java-resources:$arcgisVersion"
     implementation 'commons-io:commons-io:2.4'
     implementation 'org.ejml:ejml-all:0.41'
-    implementation 'org.bytedeco:ffmpeg-platform:4.3.2-1.5.5'
-    implementation group: 'org.bytedeco', name: 'javacv', version: '1.5.1'
     implementation 'org.jcodec:jcodec:0.2.5'
     implementation group: 'org.jcodec', name: 'jcodec-javase', version: '0.2.5'
 }

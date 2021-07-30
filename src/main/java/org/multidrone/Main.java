@@ -15,6 +15,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -25,13 +26,9 @@ import org.multidrone.coordinates.GeodeticCoordinate;
 import org.multidrone.coordinates.GlobalRefrencePoint;
 import org.multidrone.coordinates.NEDCoordinate;
 import org.multidrone.maps.DownloadPreplannedMapController;
+import org.multidrone.maps.DroneColour;
 import org.multidrone.server.ServerController;
 import org.multidrone.server.User;
-
-import org.bytedeco.javacv.AndroidFrameConverter;
-import org.bytedeco.javacv.FFmpegFrameGrabber;
-import org.bytedeco.javacv.Frame;
-import org.bytedeco.javacv.FrameGrabber;
 
 import com.MAVLink.enums.MAV_CMD;
 import org.multidrone.sharedclasses.UserDroneData;
@@ -39,6 +36,7 @@ import org.multidrone.sharedclasses.UserDroneData;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 
 public class Main extends Application {
@@ -102,6 +100,8 @@ public class Main extends Application {
     Button btnDemoCircle;
     Button btnStepCircle;
 
+    GridPane gridPaneImages;
+
     VBox mapVBox;
 
     static DownloadPreplannedMapController mapController;
@@ -126,6 +126,10 @@ public class Main extends Application {
 
     float clickedLat=-1000;
     float clickedLng=-1000;
+
+    int numImageBoxes = 0;
+
+    HashMap<Integer, ImageView> idToImages = new HashMap<>();
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -234,6 +238,8 @@ public class Main extends Application {
         btnStartCircling = ((Button) mainScene.lookup("#btnStartCircling"));
         btnSetRadius = ((Button) mainScene.lookup("#btnSetRadius"));
         btnRTL = ((Button) mainScene.lookup("#btnRTL"));
+
+        gridPaneImages = ((GridPane) mainScene.lookup("#gridPaneImages"));
     }
 
     private void setupButtons() {
@@ -263,6 +269,28 @@ public class Main extends Application {
         setupHomeButton();
 
         setupSetRefPosButton();
+    }
+
+    public void addNewImageBox(User u){
+        Platform.runLater(() -> {
+            if (!idToImages.containsKey(u.getID())){
+                VBox vb = new VBox(10);
+                Label droneLabel = new Label("SYS: " + u.getUserSystemID() + " " + DroneColour.valueOfID(u.getID()).colourStr);
+                ImageView iv = new ImageView();
+                //makes image fit its container
+                iv.fitWidthProperty().bind(vb.widthProperty());
+                iv.fitHeightProperty().bind(vb.heightProperty().multiply(0.8));
+                vb.getChildren().addAll(droneLabel,iv);
+                int rows = gridPaneImages.getRowCount();
+                int cols = gridPaneImages.getColumnCount();
+                if (numImageBoxes >=rows * cols){
+                    gridPaneImages.addRow(rows);
+                }
+                gridPaneImages.add(vb,numImageBoxes%cols, numImageBoxes/cols);
+                idToImages.put(u.getID(),iv);
+                numImageBoxes++;
+            }
+        });
     }
 
     //Rotates target circle positions
@@ -327,7 +355,12 @@ public class Main extends Application {
 
     public void setImage(int id, Image image){
         Platform.runLater(()->{
-            imgSelected.setImage(image);
+            if (selectedUserID == id){
+                imgSelected.setImage(image);
+            }
+            if (idToImages.get(id) != null) {
+                idToImages.get(id).setImage(image);
+            }
         });
 
     }
@@ -660,6 +693,10 @@ public class Main extends Application {
 
     private void highlightUser(User user){
         displaySelectedUser(user);
+        ImageView iv = idToImages.get(user.getID());
+        if (iv != null){
+            imgSelected.setImage(iv.getImage());
+        }
         selectedUserID = user.getID();
     }
 

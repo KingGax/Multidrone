@@ -6,9 +6,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import org.bytedeco.javacv.FFmpegFrameGrabber;
-import org.bytedeco.javacv.Frame;
-import org.bytedeco.javacv.Java2DFrameConverter;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.common.JCodecUtil;
@@ -26,6 +23,15 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 public class StreamReceiver implements Runnable {
+
+    ServerSocket serverSocket;
+    private int userID;
+    boolean reopenSocket = true;
+
+    public void setUserID(int id) {
+        userID = id;
+    }
+
     @Override
     public void run() {
         try {
@@ -38,157 +44,89 @@ public class StreamReceiver implements Runnable {
 
     }
 
-    private void initialize() throws Exception {
-        DatagramSocket udpSocket = new DatagramSocket(50003);
-        //System.out.println("Video listener started on port " + socket.getLocalPort());
+    public StreamReceiver(ServerSocket socket){
+        serverSocket = socket;
+    }
 
-        ByteBuffer buf = ByteBuffer.allocate(30000);
+
+
+    private void initialize() throws Exception {
+
         int recvcount = 0;
         Socket socket = null;
         InputStream in = null;
         ByteArrayOutputStream out = null;
 
-
-        // = new ServerSocket(4444);
-        ServerSocket serverSocket = null;
-
         out = new ByteArrayOutputStream(250_000);
-        ByteArrayInputStream byteIn = new ByteArrayInputStream(out.toByteArray());
-
-
-
-
-
-        try {
-            serverSocket = new ServerSocket(44444);
-            System.out.println("setup video listener on port " + serverSocket.getLocalPort());
-        } catch (IOException ex) {
-            System.out.println("Can't setup server on this port number. ");
-        }
-
-
-
-        try {
-            System.out.println("waiting for video client. ");
-            socket = serverSocket.accept();
-            System.out.println("client accepted! ");
-        } catch (IOException ex) {
-            System.out.println("Can't accept client connection. ");
-        }
-
-        try {
-            in = socket.getInputStream();
-        } catch (IOException ex) {
-            System.out.println("Can't get socket input stream. ");
-        }
-
-        byte[] bytes = new byte[250000];
-        byte[] buffer = new byte[1024 * 8];
-        /*System.out.println("making ffmpeg");
-        FFmpegFrameGrabber frameGrabber = new FFmpegFrameGrabber(in);
-
-        Java2DFrameConverter converter = new Java2DFrameConverter();
-
-        try {
-            frameGrabber.setFrameRate(30);
-            frameGrabber.setFormat("h264");
-            frameGrabber.setVideoBitrate(15);
-            frameGrabber.setVideoOption("preset", "ultrafast");
-            frameGrabber.setNumBuffers(25000000);
-            System.out.println("starting grabber");
-            frameGrabber.start();
-            System.out.println("made ffmpeg");
-        } catch (Exception e){
-           e.printStackTrace();
-        }*/
-
-
-
-        //out.close();
-        //in.close();
-        //socket.close();
-        //serverSocket.close();
+        byte[] buffer = new byte[1024 * 64];
 
         OutputStream socketOutputStream;
 
 
         System.out.println("video waiting");
         while (true) {
+            try{
+                if (reopenSocket){
+                    System.out.println("waiting for video client. id: " + userID );
+                    socket = serverSocket.accept();
+                    in = socket.getInputStream();
+                    reopenSocket = false;
+                    System.out.println("found video client " + userID);
+                }
+                int count;
+                int dataSize = 0;
+                //System.out.println("reading size");
+                byte[] sizeBytes = in.readNBytes(4);
+                int promisedSize = (((sizeBytes[0] << 24)&0xFF000000) | ((sizeBytes[1] << 16)&0xFF0000) | ((sizeBytes[2] << 8)&0xFF00) | ((sizeBytes[3])&0xFF ))& 0xFFFFFFFF;
+                //System.out.println("size to read: " + promisedSize);
+                while ((dataSize < promisedSize) && (count = in.read(buffer)) > 0) {
 
-
-
-
-
-
-
-            int count;
-            int dataSize = 0;
-            byte[] sizeBytes = in.readNBytes(4);
-            int promisedSize = (((sizeBytes[0] << 24)&0xFF000000) | ((sizeBytes[1] << 16)&0xFF0000) | ((sizeBytes[2] << 8)&0xFF00) | ((sizeBytes[3])&0xFF ))& 0xFFFFFFFF;
-            System.out.println("size to read: " + promisedSize);
-            while ((dataSize < promisedSize) && (count = in.read(buffer)) > 0) {
-
-                out.write(buffer, 0, count);
-                dataSize += count;
-                System.out.println("reading " + count + " cursize: " + dataSize);
-            }
+                    out.write(buffer, 0, count);
+                    dataSize += count;
+                }
             /*Frame f = frameGrabber.grab();
 
             if (f != null){
                 BufferedImage bufferedImage = converter.convert(f);
                 System.out.println("we have buffered image");
             }*/
-            socketOutputStream = socket.getOutputStream();
-            System.out.println(" received " + dataSize);
+                socketOutputStream = socket.getOutputStream();
+                //System.out.println(" received " + dataSize);
 
-            socketOutputStream.write(1);
-            System.out.println(" sent ack ");
-            recvcount++;
-            System.out.println("COUNT: " + recvcount);
+                socketOutputStream.write(1);
+                //System.out.println(" sent ack ");
+                recvcount++;
+                //System.out.println("COUNT: " + recvcount);
 
-            for (int i = 0; i < 14; i++) {
-                String st = String.format("%02X ", out.toByteArray()[i]);
-                System.out.print(st);
+                /*for (int i = 0; i < 14; i++) {
+                    String st = String.format("%02X ", out.toByteArray()[i]);
+                    System.out.print(st);
+                }
+                System.out.println();*/
+                decode(out.toByteArray());
+
+                H264Decoder decoder = new H264Decoder();
+                Picture pic = Picture.create(1088, 720, ColorSpace.YUV420); // Allocate output frame of max size
+                ByteBuffer bb = ByteBuffer.wrap(out.toByteArray());
+                //System.out.println("LEN " + out.toByteArray().length);
+                Picture real = decoder.decodeFrame(bb, pic.getData());
+
+                if (real!=null){
+                    Image i = convertToFxImage(AWTUtil.toBufferedImage(pic));
+                    ServerController.getInstance().setImage(userID,i);
+                }
+                out.reset();
+            } catch (SocketException e){
+                System.out.println("SOCKET EXCEPTION " + e.getMessage());
+                e.printStackTrace();
+                //System.out.println(socket.isConnected() + " " + socket.isClosed() + " " + serverSocket.isClosed() + " " + serverSocket.isBound());
+                reopenSocket = true;
+            } catch (Exception e){
+                System.out.println("EXCEPTION" + e.getMessage());
+                //System.out.println(socket.isConnected() + " " + socket.isClosed() + " " + serverSocket.isClosed() + " " + serverSocket.isBound());
+                reopenSocket = true;
             }
-            System.out.println();
-            decode(out.toByteArray());
-
-            H264Decoder decoder = new H264Decoder();
-            Picture pic = Picture.create(1088, 720, ColorSpace.YUV420); // Allocate output frame of max size
-            ByteBuffer bb = ByteBuffer.wrap(out.toByteArray());
-            System.out.println("LEN " + out.toByteArray().length);
-            Picture real = decoder.decodeFrame(bb, pic.getData());
-
-            if (real!=null){
-                Image i = convertToFxImage(AWTUtil.toBufferedImage(pic));
-                ServerController.getInstance().setImage(0,i);
-            }
-            out.reset();
-            /*byte[] buffer = new byte[1500]; // MTU = 1500 bytes
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            //System.out.println("Waiting on port " + getMyPort() + " id: " + getMyID());
-            socket.receive(packet);
-            System.out.println("Received data " + packet.getLength() + " offset:" + packet.getOffset());
-            //buf.put(packet.getData(),0,packet.getLength());
-            //long timestep = buf.getLong(4);
-
-            int fragment_type = packet.getData()[1] & 0x1F;
-            int nal_type = packet.getData()[4] & 0x1F;
-            int nri = (packet.getData()[4] & 0x60);
-            int start_bit = packet.getData()[1] & 0x80;
-            int end_bit = packet.getData()[1] & 0x40;
-            int paytype = packet.getData()[1]&0xFF;
-            //int type = packet.getData()[0] & 0x1F;
-            int seq_num = (((packet.getData()[2] << 8)&0xFF00)|packet.getData()[3]&0xFF) & 0x0000FFFF;
-            long timestamp = (((packet.getData()[4] << 24)&0xFF000000) | ((packet.getData()[5] << 16)&0xFF0000) | ((packet.getData()[6] << 8)&0xFF00) | ((packet.getData()[7])&0xFF ))& 0x0000FFFF;
-            System.out.println("num " + seq_num + " timestamp: " + timestamp + " type:" + paytype);
-            System.out.println("frag type " + fragment_type + " nal type:" + nal_type + " start bit " + start_bit + " end bit " + end_bit);
-            int recvSize = packet.getLength();
-            byte[] myObject = new byte[recvSize];
-            count++;
-            if (count %100 == 0){
-                System.out.println("COUNT: " + count);
-            }*/
+            Thread.sleep(40);
         }
     }
 
@@ -221,10 +159,10 @@ public class StreamReceiver implements Runnable {
             data = _data;
 
             int forbidden_zero_bit = getU(1);
-            System.out.println("forbidden_zero_bit " + forbidden_zero_bit);
+            //System.out.println("forbidden_zero_bit " + forbidden_zero_bit);
             int nal_ref_idc = getU(2);
             int nal_unit_type = getU(5);
-            System.out.println("nal_unit_type (should be 7 for SPS) " + nal_unit_type);
+            //System.out.println("nal_unit_type (should be 7 for SPS) " + nal_unit_type);
             //END of NAL_header
 
             //Start of SPS data
@@ -237,12 +175,12 @@ public class StreamReceiver implements Runnable {
             int constraint_set5_flag = getU(1);
             //The current version of the spec states that there are two reserved bits
             int reserved_zero_2bits = getU(2);
-            System.out.println("reserved_zero_2bits" + reserved_zero_2bits);
+            //System.out.println("reserved_zero_2bits" + reserved_zero_2bits);
             int level_idc = getU(8);
             int seq_parameter_set_id = uev();
             int log2_max_frame_num_minus4 = uev();
             int pict_order_cnt_type = uev();
-            System.out.println("pict_order_cnt_type=" + pict_order_cnt_type);
+            //System.out.println("pict_order_cnt_type=" + pict_order_cnt_type);
             if (pict_order_cnt_type == 0) {
                 uev();
             } else if (pict_order_cnt_type == 1) {
@@ -250,7 +188,7 @@ public class StreamReceiver implements Runnable {
                 sev();
                 sev();
                 int n = uev();
-                System.out.println("n*sev, n=" + n);
+                //System.out.println("n*sev, n=" + n);
                 for (int i = 0; i < n; i++)
                     sev();
             }
@@ -281,9 +219,9 @@ public class StreamReceiver implements Runnable {
         result--;
         if (signed) {
             result = (result + 1) / 2 * (result % 2 == 0 ? -1 : 1);
-            System.out.println("getSe(v) = " + (result) + " " + expGolomb);
+            //System.out.println("getSe(v) = " + (result) + " " + expGolomb);
         } else {
-            System.out.println("getUe(v) = " + (result) + " " + expGolomb);
+            //System.out.println("getUe(v) = " + (result) + " " + expGolomb);
         }
         return result;
     }
@@ -301,7 +239,7 @@ public class StreamReceiver implements Runnable {
         for (int i = 0; i < bits; i++) {
             result = result * 2 + getBit();
         }
-        System.out.println("getU(" + bits + ") = " + result);
+        //System.out.println("getU(" + bits + ") = " + result);
         return result;
     }
 
@@ -310,5 +248,10 @@ public class StreamReceiver implements Runnable {
         int idx = pos >> 3;
         pos++;
         return ((data[idx] & mask) == 0) ? 0 : 1;
+    }
+
+
+    public int getPort() {
+        return serverSocket.getLocalPort();
     }
 }

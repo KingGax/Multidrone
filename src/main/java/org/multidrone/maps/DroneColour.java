@@ -17,6 +17,7 @@ public enum DroneColour {
     public final int id;
     public final String filePath;
     public final String targetFilePath;
+    public final String colourStr;
 
 
     private DroneColour(int id) {
@@ -25,36 +26,47 @@ public enum DroneColour {
         switch (id){
             case DroneIDs.GREEN_ID:
                 filePath = root + "greenptr.png";
+                colourStr = "GREEN";
                 break;
             case DroneIDs.RED_ID:
                 filePath = root + "redptr.png";
+                colourStr = "RED";
                 break;
             case DroneIDs.PINK_ID:
                 filePath = root + "pinkptr.png";
+                colourStr = "PINK";
                 break;
             case DroneIDs.YELLOW_ID:
                 filePath = root + "yellowptr.png";
+                colourStr = "YELLOW";
                 break;
             case DroneIDs.BLUE_ID:
                 filePath = root + "blueptr.png";
+                colourStr = "BLUE";
                 break;
             case DroneIDs.BLACK_ID:
                 filePath = root + "blackptr.png";
+                colourStr = "BLACK";
                 break;
             case DroneIDs.WHITE_ID:
                 filePath = root + "whiteptr.png";
+                colourStr = "WHITE";
                 break;
             case DroneIDs.MAROON_ID:
                 filePath = root + "maroonptr.png";
+                colourStr = "MAROON";
                 break;
             case DroneIDs.PURPLE_ID:
                 filePath = root + "purpleptr.png";
+                colourStr = "PURPLE";
                 break;
             case DroneIDs.CYAN_ID:
                 filePath = root + "cyanptr.png";
+                colourStr = "CYAN";
                 break;
             default:
                 filePath = root + "defaultptr.png";
+                colourStr = "???";
         }
 
         String targetRoot = "download_preplanned_map/mapres/targets/";

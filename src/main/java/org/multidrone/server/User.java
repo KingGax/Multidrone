@@ -14,6 +14,7 @@ public class User {
 	private int port;
 	private int id;
 	private int dataPort;
+	private int videoPort;
 	private int userMavPort;
 	private short userSystemID;
 	public SingleDroneState state = SingleDroneState.Grounded;
@@ -50,6 +51,13 @@ public class User {
 	public FloatProperty batteryProperty() {
 		return battery;
 	}*/
+
+	public void setVideoPort(int port){
+		videoPort = port;
+	}
+	public int getVideoPort(){
+		return videoPort;
+	}
 
 	public long getLastServerCheckTime() {
 		return lastServerCheckTime.get();

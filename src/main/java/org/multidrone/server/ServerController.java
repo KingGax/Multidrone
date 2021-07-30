@@ -1,11 +1,14 @@
 package org.multidrone.server;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.common.msg_attitude;
@@ -32,6 +35,7 @@ public class ServerController {
 	private static ServerController instance = null;
 	private NotificationListener notificationListener = new NotificationListener();
 	private List<DataListener> dataListeners = new ArrayList<>();
+	private List<StreamReceiver> imageListeners = new ArrayList<>();
 	private Main main;
 	private int currentID = 0;
 	private ExecutorService serverExecutor;
@@ -43,8 +47,6 @@ public class ServerController {
 	final String messageHeader =  "m";
 
 	private float targetYaw;
-
-	private StreamReceiver videoRecv = new StreamReceiver();
 
 	public GlobalRefrencePoint getRefPoint() {
 		return refPoint;
@@ -64,8 +66,6 @@ public class ServerController {
 		swarmController.setUserList(users);
 		initializeSwarmController();
 
-		Thread videoThread = new Thread(videoRecv);
-		videoThread.start();
 	}
 	
 	public static ServerController getInstance() {
@@ -105,7 +105,21 @@ public class ServerController {
 		newDataThread.start();
 		return newDataListener;
 	}
-	
+
+	private StreamReceiver initializeStreamReceiver(int id){
+		ServerSocket newSocket = null;
+		try {
+			newSocket = new ServerSocket(0);
+			System.out.println("setup video listener on port " + newSocket.getLocalPort());
+		} catch (IOException ex) {
+			System.out.println("Can't setup server on this port number. ");
+		}
+		StreamReceiver newRecv = new StreamReceiver(newSocket);
+		newRecv.setUserID(id);
+		Thread newStreamRecvThread = new Thread(newRecv);
+		newStreamRecvThread.start();
+		return newRecv;
+	}
 	
 	public void fillMain(Main _main){
 		main = _main;
@@ -136,21 +150,24 @@ public class ServerController {
 			currentID++;
 			user.data = new UserDroneData();
 			DataListener newListener = initializeDataListener(user.getID());
+			StreamReceiver newReceiver = initializeStreamReceiver(user.getID());
+
+			user.setVideoPort(newReceiver.getPort());
 			user.setDataPort(newListener.getMyPort());
 			this.users.add(user);
 
+			imageListeners.add(newReceiver);
 			dataListeners.add(newListener);
 			try{
 				Thread.sleep(1000L);
 			} catch (Exception e){
 				System.out.println("timeout slep interrupted");
 			}
-
-			sendID(user,user.getID(),newListener.getMyPort());
+			sendID(user,user.getID(),newListener.getMyPort(), user.getVideoPort());
 		} else{ //if the user already exists
 			for (User u: users) {
 				if (u.equals(user)){
-					sendID(u,u.getID(),u.getDataPort());//re send the user their ID and data listener
+					sendID(u,u.getID(),u.getDataPort(),u.getVideoPort());//re send the user their ID and data listener
 					System.out.println("found user " + u.getID());
 				}
 			}
@@ -162,8 +179,8 @@ public class ServerController {
 		sendMessage(u,messageHeader+data);
 	}
 
-	public void sendID(User u, int id, int port){
-		sendMessage(u,idHeader+Integer.toString(id)+";"+port);
+	public void sendID(User u, int id, int port, int imgPort){
+		sendMessage(u,idHeader+ id +";"+port+";"+imgPort);
 	}
 
 	public User getUserByID(int id){
@@ -363,6 +380,7 @@ public class ServerController {
 			if (u.getID() == userID){
 				u.setUserMavPort(mavPort);
 				u.setUserSystemID(systemID);
+				main.addNewImageBox(u);
 			}
 		}
 	}
