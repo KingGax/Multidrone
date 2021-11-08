@@ -341,13 +341,21 @@ public class DownloadPreplannedMapController {
   }
 
   public void focusDrones(){
-    PointCollection dronePoints = new PointCollection(SpatialReferences.getWgs84());
+    PointCollection focusPoints = new PointCollection(SpatialReferences.getWgs84());
     for (Graphic drone: droneMarkers) {
       if (drone.getGeometry() != null){
-        dronePoints.add(drone.getGeometry().getExtent().getCenter());
+        focusPoints.add(drone.getGeometry().getExtent().getCenter());
       }
     }
-    Geometry g = new Polyline(dronePoints);
+    for (Graphic target: targetMarkers) {
+      if (target.getGeometry() != null){
+        focusPoints.add(target.getGeometry().getExtent().getCenter());
+      }
+    }
+    if (refPoint.getGeometry() != null){
+      focusPoints.add(refPoint.getGeometry().getExtent().getCenter());
+    }
+    Geometry g = new Polyline(focusPoints);
     mapView.setViewpointGeometryAsync(g);
   }
 

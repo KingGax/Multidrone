@@ -55,8 +55,8 @@ public class MultiDronePositionController implements Runnable {
         rotationTime = millis;
     }
 
-    public void stepCircle(){
-        rotationTimer += rotationTime / (droneNumber * 2);
+    public void stepCircle(float degrees){
+        rotationTimer += rotationTime * (degrees/360);
     }
 
     public void startCircling(int _droneNumber){

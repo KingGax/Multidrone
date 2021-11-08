@@ -498,7 +498,7 @@ public class ServerController {
 		swarmController.setSwarmHeight(alt);
 	}
 
-	public void stepCircle() {
-		swarmController.stepCircle();
+	public void stepCircle(float degrees) {
+		swarmController.stepCircle(degrees);
 	}
 }

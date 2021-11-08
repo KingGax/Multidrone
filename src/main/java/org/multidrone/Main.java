@@ -95,6 +95,7 @@ public class Main extends Application {
     TextField txtSetRadius;
     TextField txtSetCircleHeight;
     TextField txtSetDroneOrder;
+    TextField txtStepCircle;
 
     Button btnDemoOut;
     Button btnDemoCircle;
@@ -173,7 +174,6 @@ public class Main extends Application {
         mapController = mapLoader.getController();
         mapController.setParent(this);
         mapVBox.getChildren().add(mapRoot);
-        addTestData();
 
         //makes sure the application closes properly when you press X
         primaryStage.setOnCloseRequest(t -> {
@@ -223,6 +223,7 @@ public class Main extends Application {
         txtSetRadius = ((TextField) mainScene.lookup("#txtSetRadius"));
         txtSetCircleHeight = ((TextField) mainScene.lookup("#txtSetCircleHeight"));
         txtSetDroneOrder = ((TextField) mainScene.lookup("#txtSetDroneOrder"));
+        txtStepCircle = ((TextField) mainScene.lookup("#txtStepCircle"));
 
         btnSetD0Targ = ((Button) mainScene.lookup("#btnSetD0Targ"));
         btnSetD1Targ = ((Button) mainScene.lookup("#btnSetD1Targ"));
@@ -297,8 +298,18 @@ public class Main extends Application {
     //Rotates target circle positions
     private void setupStepCircle() {
         btnStepCircle.setOnAction(e -> {
-            sc.stepCircle();
-            sc.setInitialCircleTargets();
+            if (txtStepCircle.getText() != "") {
+                try {
+                    float degrees = Float.parseFloat(txtStepCircle.getText());
+                    sc.stepCircle(degrees);
+                    sc.setInitialCircleTargets();
+                } catch (Exception e1) {
+                    System.out.println("Target not set, invalid text");
+                }
+            } else{
+                System.out.println("Target not set, no height");
+            }
+
         });
     }
 
