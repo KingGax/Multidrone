@@ -599,14 +599,9 @@ public class Main extends Application {
                     if (txtSetCircleHeight.getText() != "") {
                         try {
                             float alt = Float.parseFloat(txtSetCircleHeight.getText());
-                            if (alt > 0){
-                                txtSetCircleHeight.setPromptText(txtSetCircleHeight.getText());
-                                txtSetCircleHeight.setText("");
-                                sc.setSwarmHeight(alt);
-                            } else{
-                                System.out.println("Setting altitude below ref point currently not allowed");
-                            }
-
+                            txtSetCircleHeight.setPromptText(txtSetCircleHeight.getText());
+                            txtSetCircleHeight.setText("");
+                            sc.setSwarmHeight(alt);
                         } catch (Exception e1) {
                             System.out.println("Target not set, invalid text");
                         }
