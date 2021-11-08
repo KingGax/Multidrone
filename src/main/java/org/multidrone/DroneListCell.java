@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import org.multidrone.Main;
 import org.multidrone.enums.GridCellColour;
 import org.multidrone.maps.DroneColour;
@@ -27,8 +28,6 @@ public class DroneListCell extends ListCell<User> {
 
     @FXML
     private Label lblName;
-    @FXML
-    private Label lblID;
 
     @FXML
     private Label lblRCBat;
@@ -89,6 +88,9 @@ public class DroneListCell extends ListCell<User> {
     @FXML
     private GridPane mainGridPane;
 
+    @FXML
+    private Pane paneColour;
+
     private FXMLLoader mLLoader;
 
     ServerController sc;
@@ -97,6 +99,7 @@ public class DroneListCell extends ListCell<User> {
     Alert landConfirmation;
 
     String colourString = "";
+    String paneColourStyleClass = "";
 
     @Override
     protected void updateItem(User user, boolean empty) { //Called whenever the LongProperties in User change
@@ -157,14 +160,15 @@ public class DroneListCell extends ListCell<User> {
             }
             if (colourString == ""){
                 colourString = DroneColour.valueOfID(user.getID()).colourStr;
+                paneColourStyleClass = DroneColour.valueOfID(user.getID()).colourClass;
+
             }
 
 
             //Interpret all the values into strings
             lblBattery.setText(String.valueOf(user.data.batteryPercent) + "%");
             lblRCBat.setText("RC: " + user.data.rcBatteryPercentage + "%");
-            lblName.setText(String.valueOf("SYS:" + user.getUserSystemID()));
-            lblID.setText(colourString);
+            lblName.setText(String.valueOf(user.getUserSystemID()));
             lblYaw.setText("Yaw: " + decimalFormatter.format(Math.toDegrees(user.data.yaw)));
             lblHeight.setText("Height: " + user.data.height + "m");
 
@@ -194,8 +198,7 @@ public class DroneListCell extends ListCell<User> {
             lblClosestDist.setText("CDist: " + user.closestDroneDistDist);
             lblClosestID.setText("ClosestID: " + user.closestDroneID);
 
-
-
+            paneColour.getStyleClass().set(0,paneColourStyleClass);
 
             //prevent negative last check time
             if (user.getLastServerCheckTime() < user.getLastUpdateTime()){
@@ -217,10 +220,14 @@ public class DroneListCell extends ListCell<User> {
                 case Cyan:
                     mainGridPane.getStyleClass().set(0,"gridcell_cyan");
                     break;
+                case White:
+                    mainGridPane.getStyleClass().set(0,"gridcell_white");
+                    break;
             }
             setText(null);
             Platform.runLater(() -> setGraphic(mainGridPane));
         }
+
 
     }
 
@@ -240,6 +247,12 @@ public class DroneListCell extends ListCell<User> {
         if (u.data.batteryPercent < 30){
             return GridCellColour.Red;
         }
+        if (u.data.rcBatteryPercentage < 40){
+            return GridCellColour.Amber;
+        }
+        if (u.data.rcBatteryPercentage < 30){
+            return GridCellColour.Red;
+        }
         if (timeSinceUpdate > 10){
             return GridCellColour.Red;
         }
@@ -251,7 +264,7 @@ public class DroneListCell extends ListCell<User> {
             return GridCellColour.Amber;
         }
 
-        return  GridCellColour.Green;
+        return  GridCellColour.White;
     }
 
 

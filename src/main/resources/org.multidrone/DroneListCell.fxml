@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1" fx:id="mainGridPane">
+<GridPane fx:id="mainGridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1">
     <stylesheets>
         <URL value="@css/DroneCell.css" />
     </stylesheets>
@@ -23,6 +23,7 @@
       <ColumnConstraints hgrow="SOMETIMES" minWidth="80.0" prefWidth="100.0" />
       <ColumnConstraints hgrow="SOMETIMES" minWidth="80.0" prefWidth="100.0" />
       <ColumnConstraints hgrow="SOMETIMES" minWidth="80.0" prefWidth="100.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="80.0" prefWidth="100.0" />
 </columnConstraints>
 <rowConstraints>
     <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -35,9 +36,9 @@
          </font></Label>
     <Label id="lblYaw" fx:id="lblYaw" text="Yaw: 160.123" GridPane.columnIndex="4" />
       <Label id="lblRCBattery" fx:id="lblRCBat" text="RC: 45%" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="1" />
-      <Label id="lblName" fx:id="lblName" text="SYS:-1">
+      <Label id="lblName" fx:id="lblName" prefHeight="59.0" prefWidth="70.0" text="999" GridPane.rowSpan="2">
          <font>
-            <Font size="25.0" />
+            <Font size="29.0" />
          </font>
       </Label>
       <Label id="lblHeight" fx:id="lblHeight" text="Height: 1m" GridPane.columnIndex="4" GridPane.rowIndex="1" />
@@ -65,11 +66,6 @@
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </padding>
       </VBox>
-      <Label id="lblName" fx:id="lblID" text="ID:-1" GridPane.rowIndex="1">
-         <font>
-            <Font size="25.0" />
-         </font>
-      </Label>
       <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="8">
          <children>
             <Label id="lblClosestDist" fx:id="lblClosestDist" text="Dist:100" />
@@ -94,9 +90,10 @@
          </children>
       </VBox>
       <Label fx:id="lblGPS" text="GPS: ??" GridPane.columnIndex="8" GridPane.rowIndex="1" />
+      <Pane id="paneColour" fx:id="paneColour" prefHeight="61.0" prefWidth="45.0" styleClass="panel_green" stylesheets="@css/DroneCell.css" GridPane.columnIndex="1" GridPane.rowSpan="2" />
 </children>
    <styleClass>
-      <String fx:value="gridcell_green" />
-      <String fx:value="gridcell_default" />
+      <String fx:value="gridcell_white" />
+      <String fx:value="gridcell_cyan" />
    </styleClass>
 </GridPane>

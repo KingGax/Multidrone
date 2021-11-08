@@ -10,6 +10,9 @@ h1 {
 .gridcell_green{
     -fx-background-color: green;
 }
+.gridcell_white{
+    -fx-background-color: white;
+}
 .gridcell_amber{
     -fx-background-color: orange;
 }
@@ -17,5 +20,38 @@ h1 {
     -fx-background-color: red;
 }
 .gridcell_cyan{
+    -fx-background-color: cyan;
+}
+.panel_red{
+    -fx-background-color: red;
+}
+.panel_grey{
+    -fx-background-color: grey;
+}
+.panel_green{
+    -fx-background-color: green;
+}
+.panel_blue{
+    -fx-background-color: blue;
+}
+.panel_yellow{
+    -fx-background-color: yellow;
+}
+.panel_pink{
+    -fx-background-color: #f54f6b;
+}
+.panel_black{
+    -fx-background-color: black;
+}
+.panel_white{
+    -fx-background-color: white;
+}
+.panel_maroon{
+    -fx-background-color: maroon;
+}
+.panel_purple{
+    -fx-background-color: purple;
+}
+.panel_cyan{
     -fx-background-color: cyan;
 }

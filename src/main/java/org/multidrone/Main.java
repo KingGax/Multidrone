@@ -173,6 +173,7 @@ public class Main extends Application {
         mapController = mapLoader.getController();
         mapController.setParent(this);
         mapVBox.getChildren().add(mapRoot);
+        addTestData();
 
         //makes sure the application closes properly when you press X
         primaryStage.setOnCloseRequest(t -> {
@@ -660,7 +661,7 @@ public class Main extends Application {
         connectedNamesList.getItems().add(u1);
         connectedNamesList.getItems().add(u2);
         connectedNamesList.getItems().add(u3);
-        //connectedNamesList.getItems().add(u4);
+        connectedNamesList.getItems().add(u4);
     }
 
     public void setSelectedCoordinate(float lat, float lng){

@@ -18,7 +18,7 @@ public enum DroneColour {
     public final String filePath;
     public final String targetFilePath;
     public final String colourStr;
-
+    public final String colourClass;
 
     private DroneColour(int id) {
         this.id = id;
@@ -27,46 +27,57 @@ public enum DroneColour {
             case DroneIDs.GREEN_ID:
                 filePath = root + "greenptr.png";
                 colourStr = "GREEN";
+                colourClass = "panel_green";
                 break;
             case DroneIDs.RED_ID:
                 filePath = root + "redptr.png";
                 colourStr = "RED";
+                colourClass = "panel_red";
                 break;
             case DroneIDs.PINK_ID:
                 filePath = root + "pinkptr.png";
                 colourStr = "PINK";
+                colourClass = "panel_pink";
                 break;
             case DroneIDs.YELLOW_ID:
                 filePath = root + "yellowptr.png";
                 colourStr = "YELLOW";
+                colourClass = "panel_yellow";
                 break;
             case DroneIDs.BLUE_ID:
                 filePath = root + "blueptr.png";
                 colourStr = "BLUE";
+                colourClass = "panel_blue";
                 break;
             case DroneIDs.BLACK_ID:
                 filePath = root + "blackptr.png";
                 colourStr = "BLACK";
+                colourClass = "panel_black";
                 break;
             case DroneIDs.WHITE_ID:
                 filePath = root + "whiteptr.png";
                 colourStr = "WHITE";
+                colourClass = "panel_white";
                 break;
             case DroneIDs.MAROON_ID:
                 filePath = root + "maroonptr.png";
                 colourStr = "MAROON";
+                colourClass = "panel_maroon";
                 break;
             case DroneIDs.PURPLE_ID:
                 filePath = root + "purpleptr.png";
                 colourStr = "PURPLE";
+                colourClass = "panel_purple";
                 break;
             case DroneIDs.CYAN_ID:
                 filePath = root + "cyanptr.png";
                 colourStr = "CYAN";
+                colourClass = "panel_cyan";
                 break;
             default:
                 filePath = root + "defaultptr.png";
                 colourStr = "???";
+                colourClass = "panel_grey";
         }
 
         String targetRoot = "download_preplanned_map/mapres/targets/";
