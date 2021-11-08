@@ -42,26 +42,26 @@
             </VBox>
             <VBox prefHeight="51.0" prefWidth="89.0">
                <children>
-                  <Button id="btnSetD0Targ" mnemonicParsing="false" text="Set D0 Target" />
-                  <TextField id="txtD0TargetHeight" promptText="Alt" />
+                  <Label text="Target Lat" />
+                  <TextField id="txtSetTargetLat" promptText="Lat" />
                </children>
             </VBox>
             <VBox prefHeight="51.0" prefWidth="90.0">
                <children>
-                  <Button id="btnSetD1Targ" mnemonicParsing="false" text="Set D1 Target" />
-                  <TextField id="txtD1TargetHeight" promptText="Alt" />
+                  <Label text="Target Long" />
+                  <TextField id="txtSetTargetLong" promptText="Long" />
                </children>
             </VBox>
             <VBox prefHeight="51.0" prefWidth="89.0">
                <children>
-                  <Button id="btnSetD2Targ" mnemonicParsing="false" text="Set D2 Target" />
-                  <TextField id="txtD2TargetHeight" prefHeight="26.0" prefWidth="72.0" promptText="Alt" />
+                  <Label text="Target Alt" />
+                  <TextField id="txtSetTargetHeight" prefHeight="26.0" prefWidth="72.0" promptText="Alt" />
                </children>
             </VBox>
             <VBox prefHeight="51.0" prefWidth="90.0">
                <children>
-                  <Button id="btnSetD3Targ" mnemonicParsing="false" text="Set D3 Target" />
-                  <TextField id="txtD3TargetHeight" prefHeight="26.0" prefWidth="86.0" promptText="Alt" />
+                  <Button id="btnSetTarget" mnemonicParsing="false" text="Set Target" />
+                  <TextField id="txtSetTargetSysID" prefHeight="26.0" prefWidth="86.0" promptText="SystemID" />
                </children>
             </VBox>
             <Button id="btnStopAll" mnemonicParsing="false" text="⏸" />

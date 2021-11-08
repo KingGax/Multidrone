@@ -68,10 +68,7 @@ public class Main extends Application {
     Button focusMapButton;
     Button toggleMapButton;
 
-    Button btnSetD0Targ;
-    Button btnSetD1Targ;
-    Button btnSetD2Targ;
-    Button btnSetD3Targ;
+    Button btnSetTarget;
     Button btnStopAll;
     Button btnContinue;
     Button btnSetCircleHeight;
@@ -87,10 +84,10 @@ public class Main extends Application {
     ImageView imgSelected;
 
     TextField txtSetRefAlt;
-    TextField txtD0TargetHeight;
-    TextField txtD1TargetHeight;
-    TextField txtD2TargetHeight;
-    TextField txtD3TargetHeight;
+    TextField txtSetTargetLat;
+    TextField txtSetTargetLong;
+    TextField txtSetTargetHeight;
+    TextField txtSetTargetSysID;
     TextField txtSetRotationPeriod;
     TextField txtSetRadius;
     TextField txtSetCircleHeight;
@@ -174,7 +171,7 @@ public class Main extends Application {
         mapController = mapLoader.getController();
         mapController.setParent(this);
         mapVBox.getChildren().add(mapRoot);
-
+        addTestData();
         //makes sure the application closes properly when you press X
         primaryStage.setOnCloseRequest(t -> {
             mapController.dispose();
@@ -215,20 +212,17 @@ public class Main extends Application {
         mapVBox = ((VBox) mainScene.lookup("#mapVBox"));
 
         txtSetRefAlt = ((TextField) mainScene.lookup("#txtRefHeight"));
-        txtD0TargetHeight = ((TextField) mainScene.lookup("#txtD0TargetHeight"));
-        txtD1TargetHeight = ((TextField) mainScene.lookup("#txtD1TargetHeight"));
-        txtD2TargetHeight = ((TextField) mainScene.lookup("#txtD2TargetHeight"));
-        txtD3TargetHeight = ((TextField) mainScene.lookup("#txtD3TargetHeight"));
+        txtSetTargetLat = ((TextField) mainScene.lookup("#txtSetTargetLat"));
+        txtSetTargetLong = ((TextField) mainScene.lookup("#txtSetTargetLong"));
+        txtSetTargetSysID = ((TextField) mainScene.lookup("#txtSetTargetSysID"));
+        txtSetTargetHeight = ((TextField) mainScene.lookup("#txtSetTargetHeight"));
         txtSetRotationPeriod = ((TextField) mainScene.lookup("#txtSetRotationPeriod"));
         txtSetRadius = ((TextField) mainScene.lookup("#txtSetRadius"));
         txtSetCircleHeight = ((TextField) mainScene.lookup("#txtSetCircleHeight"));
         txtSetDroneOrder = ((TextField) mainScene.lookup("#txtSetDroneOrder"));
         txtStepCircle = ((TextField) mainScene.lookup("#txtStepCircle"));
 
-        btnSetD0Targ = ((Button) mainScene.lookup("#btnSetD0Targ"));
-        btnSetD1Targ = ((Button) mainScene.lookup("#btnSetD1Targ"));
-        btnSetD2Targ = ((Button) mainScene.lookup("#btnSetD2Targ"));
-        btnSetD3Targ = ((Button) mainScene.lookup("#btnSetD3Targ"));
+        btnSetTarget = ((Button) mainScene.lookup("#btnSetTarget"));
         btnSetRotationPeriod = ((Button) mainScene.lookup("#btnSetRotationPeriod"));
         btnSetCircleHeight = ((Button) mainScene.lookup("#btnSetCircleHeight"));
         btnSetDroneOrder = ((Button) mainScene.lookup("#btnSetDroneOrder"));
@@ -250,10 +244,7 @@ public class Main extends Application {
         setupLaunchAllButton();
         setupFocusMapButton();
         setupGOTOButton();
-        setupSetTargetPosButton(btnSetD0Targ,0);
-        setupSetTargetPosButton(btnSetD1Targ,1);
-        setupSetTargetPosButton(btnSetD2Targ,2);
-        setupSetTargetPosButton(btnSetD3Targ,3);
+        setupSetTargetButton();
         setupPauseContinueButton(btnStopAll, true);
         setupPauseContinueButton(btnContinue, false);
         setupStartCircling();
@@ -537,9 +528,49 @@ public class Main extends Application {
         });
     }
 
+    void setupSetTargetButton(){
+        btnSetTarget.setOnAction(e -> {
+            if (txtSetTargetSysID.getText() != ""){
+                try{
+                    int sysID = Integer.parseInt(txtSetTargetSysID.getText());
+                    boolean foundUser = false;
+                    for (User u : connectedNamesList.getItems()){
+                        if (u.getUserSystemID() == sysID){
+                            foundUser = true;
+                            if (txtSetTargetHeight.getText() != "") {
+                                try {
+                                    float alt = Float.parseFloat(txtSetTargetHeight.getText());
+                                    float lat = Float.parseFloat(txtSetTargetLat.getText());
+                                    float lng = Float.parseFloat(txtSetTargetLong.getText());
+                                    moveTarget(lat,lng,u.getID());
+                                    u.target = new GeodeticCoordinate(lat,lng,alt);
+                                    u.targetYaw = u.data.yaw;
+                                    if (mapController.isLoaded()){
+                                        mapController.hideClickedPoint();
+                                    }
+                                    clickedLat = -1000;
+                                    clickedLng = -1000;
+                                } catch (Exception e1) {
+                                    System.out.println("Target not set, invalid text");
+                                }
+                            } else{
+                                System.out.println("Target not set, no height");
+                            }
+                        }
+                    }
+                    if (!foundUser){
+                        System.out.println("Target not set, user sys " + sysID + " does not exist");
+                    }
+                } catch (Exception ex){
+                    System.out.println("invalid system id");
+                }
+            }
+
+        });
+    }
 
     void setupSetTargetPosButton(Button button, int _id){
-        TextField txt;
+        /*TextField txt;
         int id = _id;
         switch (id){
             case 0:
@@ -591,7 +622,7 @@ public class Main extends Application {
             if (!foundUser){
                 System.out.println("Target not set, user " + id + " does not exist");
             }
-        });
+        });*/
     }
 
     void setupSetCircleHeightButton(){
@@ -673,6 +704,8 @@ public class Main extends Application {
     public void setSelectedCoordinate(float lat, float lng){
         clickedLat = lat;
         clickedLng = lng;
+        txtSetTargetLat.setText(Float.toString(lat));
+        txtSetTargetLong.setText(Float.toString(lng));
         System.out.println(clickedLat + " " + clickedLng);
     }
 
