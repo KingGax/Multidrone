@@ -171,7 +171,6 @@ public class Main extends Application {
         mapController = mapLoader.getController();
         mapController.setParent(this);
         mapVBox.getChildren().add(mapRoot);
-        addTestData();
         //makes sure the application closes properly when you press X
         primaryStage.setOnCloseRequest(t -> {
             mapController.dispose();
